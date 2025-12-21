@@ -2,379 +2,435 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Kemet ATS Transformer V20 🦾</title>
+<title>Kemet Ultimate Suite V21 (Builder + Scanner + Transformer)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
 <style>
-    :root { --primary:#2563eb; --dark:#0f172a; --ai:#7c3aed; --success:#10b981; --bg:#f1f5f9; }
+    :root { --main:#0f172a; --accent:#3b82f6; --bg:#f1f5f9; --paper:#fff; --success:#10b981; --danger:#ef4444; }
     * { box-sizing:border-box; outline:none; }
-    body { margin:0; font-family:'Inter', sans-serif; height:100vh; display:flex; background:var(--bg); overflow:hidden; }
+    body { margin:0; font-family:'Segoe UI', sans-serif; background:var(--bg); height:100vh; display:flex; flex-direction:column; overflow:hidden; }
 
-    /* === LAYOUT === */
-    .sidebar { width: 450px; background: #fff; border-right: 1px solid #ccc; display: flex; flex-direction: column; z-index: 10; box-shadow: 4px 0 20px rgba(0,0,0,0.1); }
-    .main-area { flex: 1; background: #64748b; padding: 40px; display: flex; justify-content: center; overflow-y: auto; }
+    /* === TOP NAVIGATION TABS === */
+    .nav-bar { background: #fff; border-bottom: 1px solid #cbd5e1; padding: 0 20px; display: flex; gap: 20px; height: 60px; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); z-index: 100; }
+    .brand { font-weight: 800; font-size: 18px; color: var(--main); margin-right: 30px; display:flex; align-items:center; gap:10px; }
+    .tab-btn { background: transparent; border: none; padding: 18px 10px; cursor: pointer; font-weight: 600; color: #64748b; border-bottom: 3px solid transparent; transition: 0.3s; }
+    .tab-btn:hover { color: var(--accent); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-    /* === UPLOAD ZONE (New Feature) === */
-    .upload-zone {
-        background: linear-gradient(135deg, #1e293b, #334155);
-        color: white; padding: 20px; text-align: center;
-        border-bottom: 4px solid var(--ai);
-    }
-    .file-box {
-        border: 2px dashed rgba(255,255,255,0.3); border-radius: 8px;
-        padding: 15px; margin-top: 10px; cursor: pointer; transition: 0.3s;
-        position: relative;
-    }
-    .file-box:hover { background: rgba(255,255,255,0.1); border-color: white; }
-    .file-box input { position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; }
+    /* === MAIN LAYOUT === */
+    .workspace { flex: 1; display: flex; overflow: hidden; position: relative; }
     
-    .status-badge { 
-        display: inline-block; padding: 4px 10px; border-radius: 20px; 
-        font-size: 11px; font-weight: bold; margin-top: 10px; display: none;
-    }
-    .status-good { background: #dcfce7; color: #166534; }
-    .status-bad { background: #fee2e2; color: #991b1b; }
+    /* Tabs Content Areas */
+    .tab-content { display: none; width: 100%; height: 100%; }
+    .tab-content.active { display: flex; }
 
-    /* === EDITOR === */
-    .editor-content { padding: 20px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 20px; }
-    
-    .section-head { font-size: 12px; font-weight: 800; text-transform: uppercase; color: #64748b; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
-    input, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; font-family: inherit; margin-bottom: 8px; }
+    /* --- LEFT PANEL (CONTROLS) --- */
+    .sidebar { width: 450px; background: #fff; border-right: 1px solid #cbd5e1; display: flex; flex-direction: column; overflow-y: auto; z-index: 10; padding-bottom: 50px; }
+    .panel-head { padding: 20px; background: var(--main); color: white; }
+    .panel-body { padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+
+    /* Inputs */
+    .input-group label { display: block; font-size: 11px; font-weight: bold; color: #64748b; margin-bottom: 5px; text-transform: uppercase; }
+    input, textarea, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; font-family: inherit; margin-bottom: 5px; }
+    input:focus, textarea:focus { border-color: var(--accent); background: #f8fafc; }
     textarea { resize: vertical; min-height: 80px; }
-    
-    /* Smart Buttons */
-    .btn-ai { background: linear-gradient(90deg, #4f46e5, #7c3aed); color: white; border: none; padding: 8px 15px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3); transition: 0.2s; }
-    .btn-ai:hover { transform: translateY(-2px); }
-    .btn-ghost { background: transparent; border: 1px dashed #94a3b8; color: #64748b; width: 100%; padding: 8px; border-radius: 6px; cursor: pointer; }
-    .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
 
-    /* Keyword Radar */
-    .kw-cloud { display: flex; flex-wrap: wrap; gap: 5px; padding: 10px; background: #eff6ff; border-radius: 8px; border: 1px solid #dbeafe; }
-    .kw-tag { font-size: 10px; padding: 3px 8px; background: white; border: 1px solid #bfdbfe; border-radius: 4px; color: #1e40af; }
-    .kw-matched { background: #10b981; color: white; border-color: #059669; }
+    /* Cards for Lists */
+    .item-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; position: relative; margin-bottom: 10px; }
+    .del-icon { position: absolute; top: 10px; right: 10px; color: var(--danger); cursor: pointer; }
 
-    /* === PREVIEW (A4) === */
-    #page { width: 210mm; min-height: 297mm; background: #fff; padding: 15mm 20mm; box-shadow: 0 0 30px rgba(0,0,0,0.4); color: #000; font-family: 'Times New Roman', serif; line-height: 1.4; }
-    .cv-name { font-size: 26px; font-weight: bold; text-transform: uppercase; text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 10px; }
-    .cv-contact { text-align: center; font-size: 11px; margin-bottom: 20px; }
-    .cv-head { font-size: 14px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; margin: 15px 0 8px 0; }
+    /* Buttons */
+    .btn { width: 100%; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 13px; margin-top: 5px; }
+    .btn-primary { background: var(--main); color: white; }
+    .btn-action { background: var(--accent); color: white; }
+    .btn-ghost { background: white; border: 1px dashed #94a3b8; color: #64748b; }
+    .btn-upload { background: #e0e7ff; color: #4338ca; border: 1px dashed #6366f1; padding: 30px; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+
+    /* --- RIGHT PANEL (PREVIEW) --- */
+    .preview-area { flex: 1; background: #64748b; padding: 40px; overflow-y: auto; display: flex; justify-content: center; }
+    #resume-page { width: 210mm; min-height: 297mm; background: white; padding: 15mm 20mm; box-shadow: 0 0 30px rgba(0,0,0,0.3); font-family: 'Times New Roman', serif; color: #000; line-height: 1.5; }
+
+    /* CV Styles */
+    .cv-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px; }
+    .cv-name { font-size: 28px; font-weight: bold; text-transform: uppercase; }
+    .cv-contact { font-size: 11px; margin-top: 5px; }
+    .cv-sec-head { font-size: 14px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; margin: 15px 0 10px 0; }
     .cv-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; }
-    .cv-sub { font-style: italic; font-size: 12px; margin-bottom: 3px; }
+    .cv-sub { font-style: italic; font-size: 12px; margin-bottom: 4px; }
     .cv-list { margin: 0; padding-left: 18px; font-size: 11px; }
 
-    /* Loader Modal */
-    .loader-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); z-index: 1000; display: none; align-items: center; justify-content: center; flex-direction: column; color: white; }
-    .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top-color: var(--ai); border-radius: 50%; animation: spin 1s infinite linear; margin-bottom: 15px; }
-    @keyframes spin { 100% { transform: rotate(360deg); } }
+    /* --- SCANNER RESULT STYLES --- */
+    .scan-result { padding: 20px; background: white; border-radius: 8px; max-width: 600px; margin: 20px auto; }
+    .score-circle { width: 80px; height: 80px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; margin: 0 auto 20px; border: 5px solid var(--accent); }
+    .issue-item { padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; display: flex; gap: 10px; }
+    .issue-icon { width: 20px; text-align: center; }
 
+    /* Print */
     @media print {
-        body { display: block; background: #fff; }
-        .sidebar, .loader-overlay { display: none; }
-        .main-area { padding: 0; }
-        #page { box-shadow: none; margin: 0; width: 100%; }
-        @page { margin: 15mm 20mm; }
+        .nav-bar, .sidebar { display: none; }
+        .preview-area { padding: 0; background: white; }
+        #resume-page { box-shadow: none; margin: 0; }
+        @page { size: A4; margin: 15mm 20mm; }
     }
 </style>
 </head>
 <body>
 
-<div id="loader" class="loader-overlay">
-    <div class="spinner"></div>
-    <div id="loaderText">AI analyzing...</div>
-</div>
+<nav class="nav-bar">
+    <div class="brand"><i class="fa-solid fa-pyramid"></i> KEMET V21</div>
+    <button class="tab-btn active" onclick="showTab('builder')">1. Builder (Manual)</button>
+    <button class="tab-btn" onclick="showTab('scanner')">2. ATS Scanner (Check)</button>
+    <button class="tab-btn" onclick="showTab('transformer')">3. AI Transformer (Auto)</button>
+</nav>
 
-<div class="sidebar">
-    
-    <div class="upload-zone">
-        <h2 style="margin:0; font-size:18px;"><i class="fa-solid fa-microchip"></i> Kemet Transformer</h2>
-        <div style="font-size:11px; opacity:0.8;">Upload Old CV -> Extract Data -> AI Rewrite</div>
-        
-        <div class="file-box">
-            <input type="file" id="pdfInput" accept=".pdf" onchange="parsePDF(this)">
-            <i class="fa-solid fa-cloud-arrow-up" style="font-size:24px; margin-bottom:5px;"></i><br>
-            Drop PDF CV Here to Auto-Fill
-        </div>
-        
-        <div id="parseStatus" class="status-badge"></div>
-    </div>
+<div class="workspace">
 
-    <div class="editor-content">
-        
-        <div>
-            <div class="section-head">
-                <span>🎯 New Job Description</span>
-                <span id="matchScore" style="color:var(--primary)">0% Match</span>
+    <div id="builder" class="tab-content active">
+        <div class="sidebar">
+            <div class="panel-head">
+                <h3>Manual Editor</h3>
+                <small>Build from scratch with precision</small>
             </div>
-            <textarea id="inJD" placeholder="Paste the NEW job description here. The AI will rewrite your old CV to match this..." oninput="analyzeKeywords()"></textarea>
-            <div id="kwCloud" class="kw-cloud"></div>
+            <div class="panel-body">
+                <div class="input-group">
+                    <label>Personal Info</label>
+                    <input id="inName" placeholder="Full Name" oninput="renderCV()">
+                    <input id="inTitle" placeholder="Job Title" oninput="renderCV()">
+                    <input id="inContact" placeholder="Phone | Email | LinkedIn" oninput="renderCV()">
+                </div>
+                
+                <div class="input-group">
+                    <label>Summary</label>
+                    <textarea id="inSum" placeholder="Professional summary..." oninput="renderCV()"></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label>Experience</label>
+                    <div id="expContainer"></div>
+                    <button class="btn btn-ghost" onclick="addExp()">+ Add Job</button>
+                </div>
+
+                <div class="input-group">
+                    <label>Education</label>
+                    <div id="eduContainer"></div>
+                    <button class="btn btn-ghost" onclick="addEdu()">+ Add Degree</button>
+                </div>
+
+                <div class="input-group">
+                    <label>Skills</label>
+                    <textarea id="inSkills" placeholder="Comma separated skills..." oninput="renderCV()"></textarea>
+                </div>
+
+                <button class="btn btn-primary" onclick="window.print()">Download PDF</button>
+            </div>
         </div>
-
-        <button class="btn-ai" onclick="transformCV()">
-            <i class="fa-solid fa-wand-magic-sparkles"></i> AI Tailor CV to New Job
-        </button>
-
-        <div>
-            <div class="section-head">Personal Info</div>
-            <input id="inName" placeholder="Full Name" oninput="updateCV()">
-            <input id="inTitle" placeholder="Job Title" oninput="updateCV()">
-            <input id="inContact" placeholder="Phone | Email | LinkedIn" oninput="updateCV()">
-        </div>
-
-        <div>
-            <div class="section-head">Summary</div>
-            <textarea id="inSum" placeholder="Summary..." oninput="updateCV()"></textarea>
-        </div>
-
-        <div>
-            <div class="section-head">Experience</div>
-            <div id="expList"></div>
-            <button class="btn-ghost" onclick="addExp()">+ Add Role</button>
-        </div>
-
-        <div>
-            <div class="section-head">Education</div>
-            <div id="eduList"></div>
-            <button class="btn-ghost" onclick="addEdu()">+ Add Edu</button>
-        </div>
-
-        <div>
-            <div class="section-head">Skills</div>
-            <textarea id="inSkills" placeholder="Skills..." oninput="updateCV()"></textarea>
-        </div>
-
-        <button class="btn-ai" style="background:#0f172a; margin-top:10px;" onclick="window.print()">
-            Download Optimized PDF
-        </button>
     </div>
-</div>
 
-<div class="main-area">
-    <div id="page">
-        <div class="cv-name" id="outName">YOUR NAME</div>
-        <div class="cv-contact" id="outContact">Contact Info</div>
+    <div id="scanner" class="tab-content" style="background:#f1f5f9; display:none; justify-content:center; overflow-y:auto;">
+        <div style="width:100%; max-width:800px; padding:40px;">
+            <div style="text-align:center; margin-bottom:30px;">
+                <h2>ATS Health Check</h2>
+                <p>Upload your current PDF to see if robots can read it.</p>
+            </div>
+            
+            <div class="btn-upload" onclick="document.getElementById('scanInput').click()">
+                <input type="file" id="scanInput" accept=".pdf" hidden onchange="scanPDF(this)">
+                <i class="fa-solid fa-file-pdf" style="font-size:40px; margin-bottom:15px;"></i>
+                <div>Click to Upload PDF</div>
+            </div>
 
-        <div class="cv-head">Professional Summary</div>
-        <p id="outSum" style="font-size:12px; margin:0;"></p>
-
-        <div class="cv-head">Experience</div>
-        <div id="outExp"></div>
-
-        <div class="cv-head">Education</div>
-        <div id="outEdu"></div>
-
-        <div class="cv-head">Skills</div>
-        <p id="outSkills" style="font-size:12px; margin:0;"></p>
+            <div id="scanResults" style="display:none;">
+                </div>
+        </div>
     </div>
+
+    <div id="transformer" class="tab-content" style="display:none;">
+        <div class="sidebar">
+            <div class="panel-head" style="background:var(--accent);">
+                <h3>AI Transformer</h3>
+                <small>Old CV + New Job = New Optimized CV</small>
+            </div>
+            <div class="panel-body">
+                <div class="input-group" style="background:#eff6ff; padding:10px; border:1px solid #bfdbfe; border-radius:6px;">
+                    <label style="color:#1e40af;">Step 1: Upload Old CV</label>
+                    <input type="file" id="transInput" accept=".pdf" onchange="parseForTransform(this)">
+                    <div id="transStatus" style="font-size:11px; color:green;"></div>
+                </div>
+
+                <div class="input-group">
+                    <label>Step 2: New Job Description</label>
+                    <textarea id="transJD" placeholder="Paste target job description here..." style="height:100px;"></textarea>
+                </div>
+
+                <button class="btn btn-action" onclick="runTransformation()">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Generate New CV
+                </button>
+
+                <hr style="width:100%; border:0; border-top:1px solid #eee;">
+                
+                <div style="font-size:12px; color:gray; text-align:center;">
+                    Review & Edit Data Below
+                </div>
+                
+                <div id="transEditArea" style="opacity:0.5; pointer-events:none;">
+                    <small>Data will appear here after transformation...</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="preview-area">
+        <div id="resume-page">
+            <div class="cv-header">
+                <div class="cv-name" id="outName">YOUR NAME</div>
+                <div class="cv-contact" id="outContact">Contact Info</div>
+            </div>
+
+            <div class="cv-sec-head">Professional Summary</div>
+            <p id="outSum" style="font-size:11px; margin:0;"></p>
+
+            <div class="cv-sec-head">Experience</div>
+            <div id="outExp"></div>
+
+            <div class="cv-sec-head">Education</div>
+            <div id="outEdu"></div>
+
+            <div class="cv-sec-head">Skills</div>
+            <p id="outSkills" style="font-size:11px; margin:0;"></p>
+        </div>
+    </div>
+
 </div>
 
 <script>
-// Configure PDF.js Worker
+// --- CONFIGURATION ---
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-
 let experiences = [];
 let educations = [];
-let jdKeywords = [];
-let extractedText = "";
 
-/* =========================================
-   1. PDF PARSING ENGINE (Client-Side)
-   ========================================= */
-async function parsePDF(input) {
-    const file = input.files[0];
-    if (!file) return;
-
-    showLoader("Scanning PDF structure...");
+// --- TABS LOGIC ---
+function showTab(id) {
+    document.querySelectorAll('.tab-content').forEach(el => {
+        el.style.display = 'none';
+        el.classList.remove('active');
+    });
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     
-    try {
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-        let fullText = "";
-
-        // Extract text page by page
-        for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const textContent = await page.getTextContent();
-            const pageText = textContent.items.map(item => item.str).join(" ");
-            fullText += pageText + "\n";
-        }
-        
-        extractedText = fullText;
-        
-        // ATS Health Check
-        const badge = document.getElementById('parseStatus');
-        if(fullText.length > 100) {
-            badge.className = "status-badge status-good";
-            badge.style.display = "inline-block";
-            badge.innerHTML = `<i class="fa-solid fa-check"></i> ATS Readable Text Detected`;
-            autoFillData(fullText);
-        } else {
-            badge.className = "status-badge status-bad";
-            badge.style.display = "inline-block";
-            badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Unreadable (Likely Image/Scanned)`;
-        }
-
-    } catch (e) {
-        alert("Error parsing PDF: " + e.message);
-    }
-    hideLoader();
-}
-
-/* =========================================
-   2. INTELLIGENT AUTO-FILL (Regex)
-   ========================================= */
-function autoFillData(text) {
-    // Basic Extraction logic
-    const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/;
-    const phoneRegex = /(\+?\d[\d -]{8,15}\d)/;
+    document.getElementById(id).style.display = (id === 'builder' || id === 'transformer') ? 'flex' : 'flex';
+    if(id === 'scanner') document.getElementById('scanner').style.display = 'flex'; // Full width for scanner
     
-    const emailMatch = text.match(emailRegex);
-    const phoneMatch = text.match(phoneRegex);
-    
-    if(emailMatch) document.getElementById('inName').value = "Name Detected (Verify)"; // Name is hard to extract reliably
-    if(emailMatch) {
-        let contact = emailMatch[0];
-        if(phoneMatch) contact += " | " + phoneMatch[0];
-        document.getElementById('inContact').value = contact;
-    }
+    // Preview visibility: Hidden for scanner, shown for others
+    const preview = document.querySelector('.preview-area');
+    if(id === 'scanner') preview.style.display = 'none';
+    else preview.style.display = 'flex';
 
-    // Attempt to split sections (Naive approach)
-    // This is "simulated" extraction for demo. Real extraction needs complex AI models.
-    document.getElementById('inSum').value = text.slice(0, 300) + "..."; 
-    
-    updateCV();
-    alert("Data Extracted! Please review the fields.");
+    event.currentTarget.classList.add('active');
 }
 
-/* =========================================
-   3. AI TRANSFORMATION LOGIC
-   ========================================= */
-function analyzeKeywords() {
-    const jd = document.getElementById('inJD').value.toLowerCase();
-    const cloud = document.getElementById('kwCloud');
-    
-    // Extract potential skills (Capitalized words or known tech terms)
-    const words = jd.match(/\b[A-Z][a-zA-Z]+\b/g) || [];
-    const unique = [...new Set(words)].filter(w => w.length > 3).slice(0, 10);
-    jdKeywords = unique;
+// ===============================================
+// 1. BUILDER LOGIC (MANUAL)
+// ===============================================
+function renderCV() {
+    // Basic fields
+    document.getElementById('outName').innerText = document.getElementById('inName').value || "YOUR NAME";
+    document.getElementById('outContact').innerText = document.getElementById('inContact').value;
+    document.getElementById('outSum').innerText = document.getElementById('inSum').value;
+    document.getElementById('outSkills').innerText = document.getElementById('inSkills').value;
 
-    cloud.innerHTML = unique.map(w => `<span class="kw-tag">${w}</span>`).join('');
-    
-    // Update Score
-    const cvText = document.body.innerText.toLowerCase();
-    let matches = unique.filter(w => cvText.includes(w.toLowerCase())).length;
-    let score = Math.round((matches/unique.length)*100) || 0;
-    document.getElementById('matchScore').innerText = score + "% Match";
-}
-
-function transformCV() {
-    if(jdKeywords.length === 0) return alert("Please paste a New Job Description first!");
-    if(experiences.length === 0 && !document.getElementById('inSum').value) return alert("Please upload or write your CV first!");
-
-    showLoader("AI Tailoring to Job...");
-
-    setTimeout(() => {
-        // 1. Rewrite Summary
-        const role = document.getElementById('inTitle').value || "Professional";
-        const topKw = jdKeywords.slice(0, 3).join(", ");
-        const newSum = `Adaptive ${role} with a proven history of utilizing ${topKw} to drive results. Previously ${document.getElementById('inSum').value.slice(0, 50)}...`;
-        document.getElementById('inSum').value = newSum;
-
-        // 2. Inject Keywords into Experience
-        experiences.forEach((exp, i) => {
-            const kw = jdKeywords[i % jdKeywords.length]; // Cycle through keywords
-            if(kw) {
-                exp.desc += `\n• Leveraged ${kw} to optimize workflows and enhance project delivery.`;
-            }
-        });
-        
-        // 3. Add Missing Skills
-        const currentSkills = document.getElementById('inSkills').value;
-        const missing = jdKeywords.filter(k => !currentSkills.includes(k));
-        if(missing.length > 0) {
-            document.getElementById('inSkills').value += (currentSkills ? ", " : "") + missing.join(", ");
-        }
-
-        renderExp();
-        updateCV();
-        hideLoader();
-        alert("Transformation Complete! Your CV is now tailored to the new job.");
-    }, 2000);
-}
-
-/* =========================================
-   4. CV BUILDER FUNCTIONS
-   ========================================= */
-function updateCV() {
-    document.getElementById('outName').innerText = val('inName') || 'YOUR NAME';
-    document.getElementById('outContact').innerText = val('inContact');
-    document.getElementById('outSum').innerText = val('inSum');
-    document.getElementById('outSkills').innerText = val('inSkills');
-    analyzeKeywords();
-}
-
-function addExp() {
-    experiences.push({ role:'', comp:'', date:'', desc:'' });
-    renderExp();
-}
-function renderExp() {
-    const list = document.getElementById('expList');
-    list.innerHTML = experiences.map((e,i) => `
-        <div style="background:#f8fafc; padding:10px; border:1px solid #cbd5e1; margin-bottom:10px; border-radius:6px; position:relative;">
-            <i class="fa-solid fa-xmark" style="position:absolute; top:5px; right:5px; cursor:pointer; color:red;" onclick="experiences.splice(${i},1); renderExp(); updateCV()"></i>
-            <input placeholder="Title" value="${e.role}" oninput="experiences[${i}].role=this.value; renderExpPreview()">
-            <input placeholder="Company" value="${e.comp}" oninput="experiences[${i}].comp=this.value; renderExpPreview()">
-            <input placeholder="Date" value="${e.date}" oninput="experiences[${i}].date=this.value; renderExpPreview()">
-            <textarea placeholder="• Achievements..." oninput="experiences[${i}].desc=this.value; renderExpPreview()">${e.desc}</textarea>
-        </div>
-    `).join('');
-    renderExpPreview();
-}
-function renderExpPreview() {
+    // Experience
     document.getElementById('outExp').innerHTML = experiences.map(e => `
-        <div class="cv-item">
+        <div style="margin-bottom:10px;">
             <div class="cv-row"><span>${e.role}</span><span>${e.date}</span></div>
             <div class="cv-sub">${e.comp}</div>
-            <ul class="cv-list">${e.desc.split('\n').filter(x=>x).map(x=>`<li>${x.replace('•','').trim()}</li>`).join('')}</ul>
+            <ul class="cv-list">${e.desc.split('\n').filter(x=>x).map(x=>`<li>${x}</li>`).join('')}</ul>
         </div>
     `).join('');
-}
 
-function addEdu() {
-    educations.push({ deg:'', school:'', date:'' });
-    renderEdu();
-}
-function renderEdu() {
-    const list = document.getElementById('eduList');
-    list.innerHTML = educations.map((e,i) => `
-        <div style="background:#f8fafc; padding:10px; border:1px solid #cbd5e1; margin-bottom:10px; border-radius:6px;">
-            <input placeholder="Degree" value="${e.deg}" oninput="educations[${i}].deg=this.value; renderEduPreview()">
-            <input placeholder="University" value="${e.school}" oninput="educations[${i}].school=this.value; renderEduPreview()">
-            <input placeholder="Year" value="${e.date}" oninput="educations[${i}].date=this.value; renderEduPreview()">
-        </div>
-    `).join('');
-    renderEduPreview();
-}
-function renderEduPreview() {
+    // Education
     document.getElementById('outEdu').innerHTML = educations.map(e => `
-        <div class="cv-item">
+        <div style="margin-bottom:10px;">
             <div class="cv-row"><span>${e.deg}</span><span>${e.date}</span></div>
-            <div class="cv-sub">${e.school}</div>
+            <div class="cv-sub">${e.uni}</div>
         </div>
     `).join('');
 }
 
-// Helpers
-function val(id) { return document.getElementById(id).value; }
-function showLoader(text) { document.getElementById('loader').style.display = 'flex'; document.getElementById('loaderText').innerText = text; }
-function hideLoader() { document.getElementById('loader').style.display = 'none'; }
+function addExp(data = {}) {
+    experiences.push({ role: data.role||'', comp: data.comp||'', date: data.date||'', desc: data.desc||'' });
+    renderInputs();
+    renderCV();
+}
+
+function addEdu(data = {}) {
+    educations.push({ deg: data.deg||'', uni: data.uni||'', date: data.date||'' });
+    renderInputs();
+    renderCV();
+}
+
+function renderInputs() {
+    // Re-render the input lists in the sidebar
+    const expCont = document.getElementById('expContainer');
+    expCont.innerHTML = experiences.map((e,i) => `
+        <div class="item-card">
+            <i class="fa-solid fa-trash del-icon" onclick="experiences.splice(${i},1); renderInputs(); renderCV()"></i>
+            <input placeholder="Job Title" value="${e.role}" oninput="experiences[${i}].role=this.value; renderCV()">
+            <input placeholder="Company" value="${e.comp}" oninput="experiences[${i}].comp=this.value; renderCV()">
+            <input placeholder="Date" value="${e.date}" oninput="experiences[${i}].date=this.value; renderCV()">
+            <textarea placeholder="• Achievements..." oninput="experiences[${i}].desc=this.value; renderCV()">${e.desc}</textarea>
+        </div>
+    `).join('');
+
+    const eduCont = document.getElementById('eduContainer');
+    eduCont.innerHTML = educations.map((e,i) => `
+        <div class="item-card">
+            <i class="fa-solid fa-trash del-icon" onclick="educations.splice(${i},1); renderInputs(); renderCV()"></i>
+            <input placeholder="Degree" value="${e.deg}" oninput="educations[${i}].deg=this.value; renderCV()">
+            <input placeholder="University" value="${e.uni}" oninput="educations[${i}].uni=this.value; renderCV()">
+            <input placeholder="Date" value="${e.date}" oninput="educations[${i}].date=this.value; renderCV()">
+        </div>
+    `).join('');
+}
+
+// ===============================================
+// 2. SCANNER LOGIC (CHECKER)
+// ===============================================
+async function scanPDF(input) {
+    const file = input.files[0];
+    if(!file) return;
+    
+    const text = await extractText(file);
+    const resDiv = document.getElementById('scanResults');
+    resDiv.style.display = 'block';
+    
+    // Analysis
+    const wordCount = text.split(/\s+/).length;
+    const isReadable = text.length > 200;
+    const hasEmail = /@/.test(text);
+    const hasPhone = /\d{8,}/.test(text);
+    
+    let score = 0;
+    if(isReadable) score += 40;
+    if(hasEmail) score += 20;
+    if(hasPhone) score += 20;
+    if(wordCount > 200 && wordCount < 1000) score += 20;
+
+    resDiv.innerHTML = `
+        <div class="scan-result">
+            <div class="score-circle" style="border-color:${score>70? 'var(--success)':'var(--danger)'}; color:${score>70? 'var(--success)':'var(--danger)'}">
+                ${score}%
+            </div>
+            <h3>ATS Readability Report</h3>
+            <div class="issue-item"><div class="issue-icon">${isReadable?'✅':'❌'}</div> Text Extraction (OCR not needed)</div>
+            <div class="issue-item"><div class="issue-icon">${hasEmail?'✅':'❌'}</div> Contact Info Detectable</div>
+            <div class="issue-item"><div class="issue-icon">${wordCount>200?'✅':'⚠️'}</div> Content Length (${wordCount} words)</div>
+        </div>
+    `;
+}
+
+// ===============================================
+// 3. TRANSFORMER LOGIC (THE FIX)
+// ===============================================
+let oldCVText = "";
+
+async function parseForTransform(input) {
+    const file = input.files[0];
+    if(!file) return;
+    document.getElementById('transStatus').innerText = "Reading PDF...";
+    oldCVText = await extractText(file);
+    document.getElementById('transStatus').innerText = "CV Loaded!";
+}
+
+function runTransformation() {
+    const jd = document.getElementById('transJD').value;
+    if(!oldCVText || !jd) return alert("Please upload Old CV and Paste JD!");
+
+    // 1. Extract Keywords from JD
+    const jdWords = jd.match(/\b[A-Z][a-zA-Z]+\b/g) || [];
+    const topKeywords = [...new Set(jdWords)].filter(w => w.length>3).slice(0, 5);
+
+    // 2. Smart Parsing (The "Not Stupid" Part)
+    // We try to find sections by keywords like "Experience", "Education"
+    
+    // -- Name/Contact Extraction --
+    const emailMatch = oldCVText.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/);
+    const phoneMatch = oldCVText.match(/(\+?\d[\d -]{8,15}\d)/);
+    
+    document.getElementById('inName').value = "Name (Please Verify)"; 
+    document.getElementById('inContact').value = (emailMatch?emailMatch[0]:"") + " | " + (phoneMatch?phoneMatch[0]:"");
+
+    // -- Intelligent Section Split (Regex) --
+    // This looks for "EXPERIENCE" or "WORK HISTORY" and takes text until next section
+    const expRegex = /(?:EXPERIENCE|WORK HISTORY|PROFESSIONAL EXPERIENCE)([\s\S]*?)(?:EDUCATION|SKILLS|PROJECTS|$)/i;
+    const eduRegex = /(?:EDUCATION|ACADEMIC)([\s\S]*?)(?:SKILLS|EXPERIENCE|PROJECTS|$)/i;
+    const skillRegex = /(?:SKILLS|TECHNICAL SKILLS)([\s\S]*?)(?:EXPERIENCE|EDUCATION|$)/i;
+
+    const expMatch = oldCVText.match(expRegex);
+    const eduMatch = oldCVText.match(eduRegex);
+    const skillMatch = oldCVText.match(skillRegex);
+
+    // Clear current lists
+    experiences = [];
+    educations = [];
+
+    // -- Populate Experience --
+    if (expMatch && expMatch[1]) {
+        // Try to split by dates (e.g., 2019 - 2020)
+        const rawExp = expMatch[1].trim();
+        // Fallback: Just add one big block if splitting fails, user can edit
+        addExp({ 
+            role: "Role (From Old CV)", 
+            comp: "Company (From Old CV)", 
+            date: "Date (Verify)", 
+            desc: rawExp.substring(0, 500) // Limit length
+        });
+    }
+
+    // -- Populate Education --
+    if (eduMatch && eduMatch[1]) {
+        addEdu({ deg: "Degree (Verify)", uni: eduMatch[1].trim().substring(0, 100), date: "" });
+    }
+
+    // -- Populate Skills (Merge Old + New JD Keywords) --
+    let newSkills = topKeywords.join(", ");
+    if (skillMatch && skillMatch[1]) {
+        newSkills += ", " + skillMatch[1].replace(/\n/g, ", ").substring(0, 200);
+    }
+    document.getElementById('inSkills').value = newSkills;
+
+    // -- Rewrite Summary --
+    const jobTitle = document.getElementById('inTitle').value || "Professional";
+    document.getElementById('inSum').value = `Targeting role as ${jobTitle}. Proven expertise in ${topKeywords.slice(0,3).join(', ')}. Leveraging prior experience to drive results.`;
+
+    // Unlock UI
+    document.getElementById('transEditArea').style.opacity = "1";
+    document.getElementById('transEditArea').style.pointerEvents = "auto";
+    
+    // Render and switch to Builder view essentially (since they share inputs)
+    renderInputs();
+    renderCV();
+    alert("Transformation Complete! Data has been mapped to the Manual Builder. Please review and edit.");
+}
+
+
+// --- HELPER: TEXT EXTRACTION ---
+async function extractText(file) {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+    let fullText = "";
+    for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        fullText += textContent.items.map(item => item.str).join(" ");
+    }
+    return fullText;
+}
 
 // Init
 window.onload = function() { addExp(); addEdu(); }
+
 </script>
 
 </body>
-                </html>
-    
+</html>
