@@ -36,5 +36,201 @@
         .radio-label:hover { border-color: #c04000; }
 
         /* زر الرفع والنتائج */
-        .upload-
+        .upload-wrapper { position: relative; margin-top: 10px; }
+        .upload-btn { background: linear-gradient(135deg, #c04000 0%, #a03500 100%); color: white; padding: 15px; border-radius: 10px; font-weight: bold; width: 100%; border: none; font-size: 16px; cursor: pointer; }
+        input[type="file"] { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+
+        .card { background: #fff; border: 1px solid #eee; border-left: 5px solid #c04000; border-radius: 8px; padding: 10px; margin-top: 10px; text-align: right; }
+        .dl-btn { display: block; padding: 10px; margin-top: 5px; text-align: center; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: bold; }
         
+        /* ألوان الأزرار */
+        .btn-jpg { background: #e3f2fd; color: #1565c0; } .btn-png { background: #ede7f6; color: #673ab7; }
+        .btn-webp { background: #e8f5e9; color: #2e7d32; } .btn-avif { background: #fce4ec; color: #c2185b; }
+        .btn-pdf { background: #ffebee; color: #c62828; } .btn-svg { background: #fff8e1; color: #f57f17; }
+        
+        .loader { display: none; font-weight: bold; color: #c04000; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+
+    <div class="section-box color-picker-box">
+        <span style="font-weight:bold; color:#8b4513;">🎨 أداة معرفة الألوان</span>
+        <div style="margin-top:10px;">
+            <label class="picker-btn">رفع صورة 📂<input type="file" id="pickerInput" accept="image/*" style="display:none;"></label>
+        </div>
+        <div id="imagePreviewContainer"><img id="imagePreview"><canvas id="pickerCanvas" style="display:none;"></canvas></div>
+        <div id="colorResult" class="color-res"><div id="colorBox" class="c-box"></div><span id="colorHex"></span></div>
+    </div>
+
+    <div class="section-box">
+        <h2>Kemet Pro V7 🏛️</h2>
+        <p>تحويل + SEO + عزل (Blur) في خطوة واحدة</p>
+
+        <div class="options-grid">
+            <div class="option-group">
+                <span class="opt-title">1. صيغة الملف:</span>
+                <div class="radio-group">
+                    <label class="radio-label"><input type="radio" name="format" value="jpg" checked> JPG</label>
+                    <label class="radio-label"><input type="radio" name="format" value="png"> PNG</label>
+                    <label class="radio-label"><input type="radio" name="format" value="webp"> WebP</label>
+                    <label class="radio-label"><input type="radio" name="format" value="avif"> AVIF</label>
+                    <label class="radio-label"><input type="radio" name="format" value="pdf"> PDF</label>
+                    <label class="radio-label"><input type="radio" name="format" value="svg"> SVG</label>
+                </div>
+            </div>
+
+            <div class="option-group">
+                <span class="opt-title">2. إضافة بلور (تغبيش):</span>
+                <select id="blurType">
+                    <option value="none">بدون (لا شيء)</option>
+                    <option value="face">الوجه (تقريبي/منتصف علوي)</option>
+                    <option value="top">الجزء العلوي (إخفاء رأس)</option>
+                    <option value="bottom">الجزء السفلي (إخفاء قدم/نص)</option>
+                    <option value="center">منتصف الصورة</option>
+                </select>
+                <div style="margin-top:5px;">
+                    <span class="opt-title" style="display:inline;">القوة:</span>
+                    <input type="range" id="blurAmount" min="5" max="50" value="15" style="width:60%; vertical-align:middle;">
+                </div>
+            </div>
+        </div>
+
+        <div class="upload-wrapper">
+            <button class="upload-btn">3. اختر الصور ونفذ الكل 🚀</button>
+            <input type="file" id="fileInput" multiple accept="image/*">
+        </div>
+
+        <div id="loader" class="loader">جاري المعالجة...</div>
+        <div id="output"></div>
+    </div>
+</div>
+
+<script>
+    // --- متغيرات وقواميس ---
+    const MAX_WIDTH = 2048;
+    const QUALITY = 0.90;
+    const seoKeywords = ["ancient-egypt", "pharaohs", "kemet", "egyptian-art", "pyramids", "sphinx", "nile", "tutankhamun", "nefertiti", "luxor", "karnak", "ramses", "hieroglyphs", "lotus", "ankh", "horus", "anubis", "ra-god"];
+
+    // --- 1. منطق لاقط الألوان ---
+    const pickerInput = document.getElementById('pickerInput');
+    const imgPrev = document.getElementById('imagePreview');
+    const pickCanvas = document.getElementById('pickerCanvas');
+    const pickCtx = pickCanvas.getContext('2d');
+    
+    pickerInput.addEventListener('change', (e) => {
+        if(e.target.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (ev) => { imgPrev.src = ev.target.result; document.getElementById('imagePreviewContainer').style.display='block'; document.getElementById('colorResult').style.display='none'; };
+            reader.readAsDataURL(e.target.files[0]);
+        }
+    });
+    imgPrev.onload = () => { pickCanvas.width = imgPrev.naturalWidth; pickCanvas.height = imgPrev.naturalHeight; pickCtx.drawImage(imgPrev, 0, 0); };
+    imgPrev.addEventListener('click', (e) => {
+        const rect = imgPrev.getBoundingClientRect();
+        const x = (e.clientX - rect.left) * (imgPrev.naturalWidth / rect.width);
+        const y = (e.clientY - rect.top) * (imgPrev.naturalHeight / rect.height);
+        const p = pickCtx.getImageData(x, y, 1, 1).data;
+        const hex = "#" + ((1<<24)+(p[0]<<16)+(p[1]<<8)+p[2]).toString(16).slice(1).toUpperCase();
+        document.getElementById('colorBox').style.background = hex;
+        document.getElementById('colorHex').innerText = hex + ` (RGB: ${p[0]},${p[1]},${p[2]})`;
+        document.getElementById('colorResult').style.display = 'flex';
+    });
+
+    // --- 2. منطق المعالجة والبلور ---
+    const fileInput = document.getElementById('fileInput');
+    const outputDiv = document.getElementById('output');
+    const loader = document.getElementById('loader');
+
+    fileInput.addEventListener('change', async (e) => {
+        outputDiv.innerHTML = '';
+        const files = Array.from(e.target.files);
+        if(!files.length) return;
+        
+        loader.style.display = 'block';
+        const format = document.querySelector('input[name="format"]:checked').value;
+        const blurType = document.getElementById('blurType').value;
+        const blurAmount = document.getElementById('blurAmount').value;
+
+        for (const file of files) {
+            try { await processImage(file, format, blurType, blurAmount); } catch(err) { console.error(err); }
+        }
+        loader.style.display = 'none';
+        fileInput.value = '';
+    });
+
+    function processImage(file, format, blurType, blurVal) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.src = ev.target.result;
+                img.onload = () => {
+                    let w = img.width, h = img.height;
+                    // تحجيم
+                    if (w > MAX_WIDTH) { h = Math.round(h * (MAX_WIDTH/w)); w = MAX_WIDTH; }
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w; canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+
+                    // === تطبيق البلور (Blur Logic) ===
+                    if(blurType !== 'none') {
+                        ctx.save(); // حفظ الحالة
+                        ctx.beginPath();
+                        
+                        // تحديد المنطقة
+                        if (blurType === 'top') ctx.rect(0, 0, w, h * 0.25); // ربع علوي
+                        else if (blurType === 'bottom') ctx.rect(0, h * 0.75, w, h * 0.25); // ربع سفلي
+                        else if (blurType === 'center') ctx.rect(w*0.25, h*0.25, w*0.5, h*0.5); // مربع في المنتصف
+                        else if (blurType === 'face') ctx.ellipse(w/2, h*0.35, w*0.2, h*0.25, 0, 0, 2 * Math.PI); // شكل بيضاوي في مكان الوجه المتوقع
+
+                        ctx.clip(); // قص المنطقة للتأثير عليها فقط
+                        ctx.filter = `blur(${blurVal}px)`;
+                        ctx.drawImage(img, 0, 0, w, h); // رسم الصورة مرة أخرى (ستظهر مشوشة في المنطقة المقصوصة فقط)
+                        ctx.restore(); // استعادة الحالة
+                    }
+
+                    // === الحفظ والتحميل ===
+                    const seoName = `kemet-${seoKeywords[Math.floor(Math.random()*seoKeywords.length)]}-${Math.floor(Math.random()*1000)}`;
+                    const card = document.createElement('div'); card.className = 'card';
+                    const nameSpan = document.createElement('div'); nameSpan.style.fontWeight='bold'; nameSpan.innerText = seoName;
+                    card.appendChild(nameSpan);
+
+                    if (['jpg','png','webp','avif'].includes(format)) {
+                        let mime = format==='jpg'?'image/jpeg':`image/${format}`;
+                        canvas.toBlob(blob => {
+                            if(blob) createBtn(blob, `${seoName}.${format}`, format, card);
+                            resolve();
+                        }, mime, QUALITY);
+                    } else if (format === 'pdf') {
+                        const { jsPDF } = window.jspdf;
+                        const pdf = new jsPDF({ unit:'mm', format:[w*0.26, h*0.26] });
+                        pdf.addImage(canvas.toDataURL('image/jpeg', QUALITY), 'JPEG', 0, 0, w*0.26, h*0.26);
+                        createBtn(pdf.output('blob'), `${seoName}.pdf`, 'pdf', card);
+                        resolve();
+                    } else if (format === 'svg') {
+                        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><image href="${canvas.toDataURL('image/jpeg',QUALITY)}" width="${w}" height="${h}"/></svg>`;
+                        createBtn(new Blob([svg],{type:"image/svg+xml"}), `${seoName}.svg`, 'svg', card);
+                        resolve();
+                    }
+                    outputDiv.appendChild(card);
+                };
+            };
+        });
+    }
+
+    function createBtn(blob, name, type, parent) {
+        const url = URL.createObjectURL(blob);
+        const btn = document.createElement('a');
+        btn.href = url; btn.download = name; btn.className = `dl-btn btn-${type}`;
+        btn.innerHTML = `تحميل ${type.toUpperCase()} 📥 (${(blob.size/1024).toFixed(1)} KB)`;
+        parent.appendChild(btn);
+    }
+</script>
+
+</body>
+</html>
