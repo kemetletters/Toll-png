@@ -2,423 +2,379 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Kemet Enterprise ATS Architect (V18)</title>
+<title>Kemet ATS Transformer V20 🦾</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+
 <style>
-    /* === CORE VARIABLES === */
-    :root { 
-        --sidebar-bg: #1e293b; --sidebar-text: #e2e8f0; --accent: #3b82f6; 
-        --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
-        --page-bg: #525659; --paper: #ffffff;
-    }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: 'Segoe UI', sans-serif; height: 100vh; display: flex; overflow: hidden; }
+    :root { --primary:#2563eb; --dark:#0f172a; --ai:#7c3aed; --success:#10b981; --bg:#f1f5f9; }
+    * { box-sizing:border-box; outline:none; }
+    body { margin:0; font-family:'Inter', sans-serif; height:100vh; display:flex; background:var(--bg); overflow:hidden; }
 
-    /* === 1. LEFT PANEL (The Command Center) === */
-    .sidebar { 
-        width: 450px; background: var(--sidebar-bg); color: var(--sidebar-text); 
-        display: flex; flex-direction: column; border-right: 1px solid #334155; 
-        overflow-y: auto; z-index: 10;
-    }
-    .header { 
-        padding: 20px; border-bottom: 1px solid #334155; background: #0f172a; 
-        position: sticky; top: 0; z-index: 20;
-    }
-    .header h2 { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 10px; color: var(--accent); }
-    .header small { color: #94a3b8; font-size: 11px; }
+    /* === LAYOUT === */
+    .sidebar { width: 450px; background: #fff; border-right: 1px solid #ccc; display: flex; flex-direction: column; z-index: 10; box-shadow: 4px 0 20px rgba(0,0,0,0.1); }
+    .main-area { flex: 1; background: #64748b; padding: 40px; display: flex; justify-content: center; overflow-y: auto; }
 
-    /* Score Bar */
-    .ats-meter { margin-top: 10px; background: #334155; height: 8px; border-radius: 4px; overflow: hidden; }
-    .ats-fill { height: 100%; width: 0%; background: var(--danger); transition: 0.5s; }
-    .score-text { font-size: 12px; font-weight: bold; margin-top: 5px; display: flex; justify-content: space-between; }
-
-    /* Form Elements */
-    .form-section { padding: 15px; border-bottom: 1px solid #334155; }
-    .sec-title { 
-        font-size: 12px; font-weight: 700; text-transform: uppercase; 
-        color: #94a3b8; margin-bottom: 10px; letter-spacing: 1px; 
+    /* === UPLOAD ZONE (New Feature) === */
+    .upload-zone {
+        background: linear-gradient(135deg, #1e293b, #334155);
+        color: white; padding: 20px; text-align: center;
+        border-bottom: 4px solid var(--ai);
     }
+    .file-box {
+        border: 2px dashed rgba(255,255,255,0.3); border-radius: 8px;
+        padding: 15px; margin-top: 10px; cursor: pointer; transition: 0.3s;
+        position: relative;
+    }
+    .file-box:hover { background: rgba(255,255,255,0.1); border-color: white; }
+    .file-box input { position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; }
     
-    label { font-size: 11px; font-weight: 600; display: block; margin-bottom: 4px; color: #cbd5e1; }
-    input, textarea, select { 
-        width: 100%; background: #0f172a; border: 1px solid #334155; 
-        color: white; padding: 10px; border-radius: 4px; font-size: 13px; 
-        font-family: inherit; margin-bottom: 10px; transition: 0.2s;
+    .status-badge { 
+        display: inline-block; padding: 4px 10px; border-radius: 20px; 
+        font-size: 11px; font-weight: bold; margin-top: 10px; display: none;
     }
-    input:focus, textarea:focus { border-color: var(--accent); outline: none; background: #1e293b; }
+    .status-good { background: #dcfce7; color: #166534; }
+    .status-bad { background: #fee2e2; color: #991b1b; }
+
+    /* === EDITOR === */
+    .editor-content { padding: 20px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 20px; }
+    
+    .section-head { font-size: 12px; font-weight: 800; text-transform: uppercase; color: #64748b; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
+    input, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; font-family: inherit; margin-bottom: 8px; }
     textarea { resize: vertical; min-height: 80px; }
-
-    /* Keyword Tags */
-    .kw-cloud { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
-    .kw-tag { 
-        font-size: 10px; padding: 3px 8px; border-radius: 4px; 
-        background: #334155; color: #94a3b8; border: 1px solid #475569; 
-    }
-    .kw-tag.found { background: rgba(16, 185, 129, 0.2); color: var(--success); border-color: var(--success); }
-    .kw-tag.missing { background: rgba(239, 68, 68, 0.1); color: var(--danger); border-color: var(--danger); }
-
-    /* Action Buttons */
-    .btn { 
-        width: 100%; padding: 10px; border: none; border-radius: 4px; 
-        font-weight: 600; cursor: pointer; font-size: 13px; display: flex; 
-        align-items: center; justify-content: center; gap: 8px; margin-top: 5px;
-    }
-    .btn-primary { background: var(--accent); color: white; }
-    .btn-primary:hover { background: #2563eb; }
-    .btn-outline { background: transparent; border: 1px dashed #475569; color: #94a3b8; }
-    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
     
-    .ai-tool { background: linear-gradient(90deg, #4f46e5, #7c3aed); color: white; border: none; font-size: 11px; padding: 5px 10px; border-radius: 20px; cursor: pointer; margin-bottom: 5px; display: inline-flex; align-items: center; gap: 5px; }
-    .ai-tool:hover { opacity: 0.9; }
+    /* Smart Buttons */
+    .btn-ai { background: linear-gradient(90deg, #4f46e5, #7c3aed); color: white; border: none; padding: 8px 15px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3); transition: 0.2s; }
+    .btn-ai:hover { transform: translateY(-2px); }
+    .btn-ghost { background: transparent; border: 1px dashed #94a3b8; color: #64748b; width: 100%; padding: 8px; border-radius: 6px; cursor: pointer; }
+    .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
 
-    /* === 2. PREVIEW PANEL (The Paper) === */
-    .preview { flex: 1; background: var(--page-bg); padding: 40px; overflow-y: auto; display: flex; justify-content: center; }
-    
-    #resume-page {
-        width: 210mm; min-height: 297mm; background: var(--paper); 
-        padding: 15mm 20mm; color: #000; box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        font-family: 'Times New Roman', Times, serif; line-height: 1.4;
-    }
+    /* Keyword Radar */
+    .kw-cloud { display: flex; flex-wrap: wrap; gap: 5px; padding: 10px; background: #eff6ff; border-radius: 8px; border: 1px solid #dbeafe; }
+    .kw-tag { font-size: 10px; padding: 3px 8px; background: white; border: 1px solid #bfdbfe; border-radius: 4px; color: #1e40af; }
+    .kw-matched { background: #10b981; color: white; border-color: #059669; }
 
-    /* Resume Typography (Strict ATS) */
+    /* === PREVIEW (A4) === */
+    #page { width: 210mm; min-height: 297mm; background: #fff; padding: 15mm 20mm; box-shadow: 0 0 30px rgba(0,0,0,0.4); color: #000; font-family: 'Times New Roman', serif; line-height: 1.4; }
     .cv-name { font-size: 26px; font-weight: bold; text-transform: uppercase; text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 10px; }
     .cv-contact { text-align: center; font-size: 11px; margin-bottom: 20px; }
-    .cv-sec-head { font-size: 14px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; margin: 15px 0 10px 0; }
-    .cv-item { margin-bottom: 12px; }
+    .cv-head { font-size: 14px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; margin: 15px 0 8px 0; }
     .cv-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; }
     .cv-sub { font-style: italic; font-size: 12px; margin-bottom: 3px; }
     .cv-list { margin: 0; padding-left: 18px; font-size: 11px; }
-    .cv-list li { margin-bottom: 2px; }
 
-    /* Print Mode */
+    /* Loader Modal */
+    .loader-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); z-index: 1000; display: none; align-items: center; justify-content: center; flex-direction: column; color: white; }
+    .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top-color: var(--ai); border-radius: 50%; animation: spin 1s infinite linear; margin-bottom: 15px; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
     @media print {
-        body { display: block; background: white; height: auto; }
-        .sidebar { display: none; }
-        .preview { padding: 0; display: block; }
-        #resume-page { width: 100%; box-shadow: none; margin: 0; padding: 0; }
-        @page { size: A4; margin: 15mm 20mm; }
+        body { display: block; background: #fff; }
+        .sidebar, .loader-overlay { display: none; }
+        .main-area { padding: 0; }
+        #page { box-shadow: none; margin: 0; width: 100%; }
+        @page { margin: 15mm 20mm; }
     }
 </style>
 </head>
 <body>
 
+<div id="loader" class="loader-overlay">
+    <div class="spinner"></div>
+    <div id="loaderText">AI analyzing...</div>
+</div>
+
 <div class="sidebar">
-    <div class="header">
-        <h2><i class="fa-solid fa-layer-group"></i> Kemet Enterprise <span style="font-size:10px; background:var(--accent); color:white; padding:2px 6px; border-radius:4px;">V18</span></h2>
+    
+    <div class="upload-zone">
+        <h2 style="margin:0; font-size:18px;"><i class="fa-solid fa-microchip"></i> Kemet Transformer</h2>
+        <div style="font-size:11px; opacity:0.8;">Upload Old CV -> Extract Data -> AI Rewrite</div>
         
-        <div class="ats-meter"><div class="ats-fill" id="atsBar"></div></div>
-        <div class="score-text">
-            <span>ATS Match Rate</span>
-            <span id="atsScore">0%</span>
+        <div class="file-box">
+            <input type="file" id="pdfInput" accept=".pdf" onchange="parsePDF(this)">
+            <i class="fa-solid fa-cloud-arrow-up" style="font-size:24px; margin-bottom:5px;"></i><br>
+            Drop PDF CV Here to Auto-Fill
         </div>
+        
+        <div id="parseStatus" class="status-badge"></div>
     </div>
 
-    <div class="form-section">
-        <div class="sec-title">🎯 Target Analysis (Paste JD)</div>
-        <textarea id="jdInput" placeholder="Paste the Job Description here to activate the Keyword Radar..." oninput="analyzeKeywords()"></textarea>
-        <div id="keywordRadar" class="kw-cloud">
+    <div class="editor-content">
+        
+        <div>
+            <div class="section-head">
+                <span>🎯 New Job Description</span>
+                <span id="matchScore" style="color:var(--primary)">0% Match</span>
             </div>
-    </div>
-
-    <div class="form-section">
-        <div class="sec-title">👤 Candidate Profile</div>
-        <input id="inName" placeholder="Full Name" oninput="updateCV()">
-        <input id="inTitle" placeholder="Current Job Title" list="jobList" oninput="updateCV()">
-        <datalist id="jobList">
-            </datalist>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <input id="inPhone" placeholder="Phone" oninput="updateCV()">
-            <input id="inLoc" placeholder="City, Country" oninput="updateCV()">
+            <textarea id="inJD" placeholder="Paste the NEW job description here. The AI will rewrite your old CV to match this..." oninput="analyzeKeywords()"></textarea>
+            <div id="kwCloud" class="kw-cloud"></div>
         </div>
-        <input id="inEmail" placeholder="Email" oninput="updateCV()">
-        <input id="inLink" placeholder="LinkedIn / Portfolio" oninput="updateCV()">
-    </div>
 
-    <div class="form-section">
-        <div class="sec-title">📝 Summary</div>
-        <button class="ai-tool" onclick="generateSummary()"><i class="fa-solid fa-magic"></i> AI Generate</button>
-        <textarea id="inSum" placeholder="Professional summary..." oninput="updateCV()"></textarea>
-    </div>
+        <button class="btn-ai" onclick="transformCV()">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> AI Tailor CV to New Job
+        </button>
 
-    <div class="form-section">
-        <div class="sec-title">💼 Experience</div>
-        <div id="expContainer"></div>
-        <button class="btn btn-outline" onclick="addExp()">+ Add Position</button>
-    </div>
+        <div>
+            <div class="section-head">Personal Info</div>
+            <input id="inName" placeholder="Full Name" oninput="updateCV()">
+            <input id="inTitle" placeholder="Job Title" oninput="updateCV()">
+            <input id="inContact" placeholder="Phone | Email | LinkedIn" oninput="updateCV()">
+        </div>
 
-    <div class="form-section">
-        <div class="sec-title">🎓 Education</div>
-        <div id="eduContainer"></div>
-        <button class="btn btn-outline" onclick="addEdu()">+ Add Education</button>
-    </div>
+        <div>
+            <div class="section-head">Summary</div>
+            <textarea id="inSum" placeholder="Summary..." oninput="updateCV()"></textarea>
+        </div>
 
-    <div class="form-section">
-        <div class="sec-title">🛠️ Skills</div>
-        <button class="ai-tool" onclick="extractSkillsFromJD()"><i class="fa-solid fa-magnet"></i> Extract from JD</button>
-        <textarea id="inSkills" placeholder="Python, Java, Leadership..." oninput="updateCV()"></textarea>
-    </div>
+        <div>
+            <div class="section-head">Experience</div>
+            <div id="expList"></div>
+            <button class="btn-ghost" onclick="addExp()">+ Add Role</button>
+        </div>
 
-    <div class="form-section">
-        <button class="btn btn-primary" onclick="window.print()">
-            <i class="fa-solid fa-file-pdf"></i> Download Official PDF
+        <div>
+            <div class="section-head">Education</div>
+            <div id="eduList"></div>
+            <button class="btn-ghost" onclick="addEdu()">+ Add Edu</button>
+        </div>
+
+        <div>
+            <div class="section-head">Skills</div>
+            <textarea id="inSkills" placeholder="Skills..." oninput="updateCV()"></textarea>
+        </div>
+
+        <button class="btn-ai" style="background:#0f172a; margin-top:10px;" onclick="window.print()">
+            Download Optimized PDF
         </button>
     </div>
 </div>
 
-<div class="preview">
-    <div id="resume-page">
-        <div class="cv-name" id="outName">Your Name</div>
+<div class="main-area">
+    <div id="page">
+        <div class="cv-name" id="outName">YOUR NAME</div>
         <div class="cv-contact" id="outContact">Contact Info</div>
 
-        <div class="cv-sec-head">Professional Summary</div>
-        <p style="font-size:11px; margin:0;" id="outSum"></p>
+        <div class="cv-head">Professional Summary</div>
+        <p id="outSum" style="font-size:12px; margin:0;"></p>
 
-        <div class="cv-sec-head">Professional Experience</div>
+        <div class="cv-head">Experience</div>
         <div id="outExp"></div>
 
-        <div class="cv-sec-head">Education</div>
+        <div class="cv-head">Education</div>
         <div id="outEdu"></div>
 
-        <div class="cv-sec-head">Skills</div>
-        <p style="font-size:11px; margin:0;" id="outSkills"></p>
+        <div class="cv-head">Skills</div>
+        <p id="outSkills" style="font-size:12px; margin:0;"></p>
     </div>
 </div>
 
 <script>
-/* =========================================
-   DATABASE & CONFIGURATION
-   ========================================= */
-// 1. Top 500+ Universities & Regions (Offline Database)
-const universities = [
-    "Cairo University", "Ain Shams University", "Alexandria University", "Mansoura University", 
-    "Assiut University", "Helwan University", "Zagazig University", "Tanta University",
-    "American University in Cairo (AUC)", "German University in Cairo (GUC)", "British University in Egypt (BUE)",
-    "Harvard University", "Stanford University", "MIT", "Oxford University", "Cambridge University",
-    "King Saud University", "King Abdulaziz University", "United Arab Emirates University",
-    "Addis Ababa University", "University of Nairobi", "University of Lagos", "University of Cape Town"
-    // ... القائمة يمكن زيادتها للآلاف دون التأثير على السرعة
-];
+// Configure PDF.js Worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
-// 2. High-Impact Keyword Library (The Keyword Radar)
-const hardSkills = [
-    "Python","Java","SQL","HTML","CSS","JavaScript","React","Angular","Node.js","AWS","Azure",
-    "Docker","Kubernetes","Git","Agile","Scrum","JIRA","SEO","SEM","Google Analytics","CRM",
-    "Salesforce","SAP","Oracle","Photoshop","Illustrator","AutoCAD","Revit","Accounting","Auditing",
-    "Budgeting","Forecasting","HRIS","Recruiting","Payroll","Logistics","Supply Chain","Negotiation"
-];
-
-// 3. AI Sentence Builder Templates
-const aiTemplates = {
-    'dev': "Developed [Feature] using [Tech Stack], reducing load time by [Number]%.",
-    'mgr': "Led a team of [Number] to execute [Project], increasing revenue by [Number]%.",
-    'sales': "Achieved [Number]% of sales target by implementing [Strategy] in [Region].",
-    'gen': "Improved [Process] by [Action], resulting in [Result]."
-};
+let experiences = [];
+let educations = [];
+let jdKeywords = [];
+let extractedText = "";
 
 /* =========================================
-   CORE LOGIC
+   1. PDF PARSING ENGINE (Client-Side)
    ========================================= */
-let expCount = 0;
-let eduCount = 0;
+async function parsePDF(input) {
+    const file = input.files[0];
+    if (!file) return;
 
-// Initialize
-window.onload = function() {
-    addExp(); 
-    addEdu();
-    // Populate Job Titles
-    const jobs = ["Software Engineer","Product Manager","Accountant","HR Specialist","Sales Manager","Civil Engineer"];
-    const dl = document.getElementById('jobList');
-    jobs.forEach(j => { let op = document.createElement('option'); op.value=j; dl.appendChild(op); });
-};
-
-// --- DATA BINDING ---
-function updateCV() {
-    // Basic Info
-    setText('outName', 'inName', 'YOUR NAME');
+    showLoader("Scanning PDF structure...");
     
-    // Contact Line
-    const contact = [
-        val('inLoc'), val('inPhone'), val('inEmail'), val('inLink')
-    ].filter(Boolean).join(" | ");
-    document.getElementById('outContact').innerText = contact;
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+        let fullText = "";
 
-    // Summary & Skills
-    setText('outSum', 'inSum', '');
-    setText('outSkills', 'inSkills', '');
+        // Extract text page by page
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map(item => item.str).join(" ");
+            fullText += pageText + "\n";
+        }
+        
+        extractedText = fullText;
+        
+        // ATS Health Check
+        const badge = document.getElementById('parseStatus');
+        if(fullText.length > 100) {
+            badge.className = "status-badge status-good";
+            badge.style.display = "inline-block";
+            badge.innerHTML = `<i class="fa-solid fa-check"></i> ATS Readable Text Detected`;
+            autoFillData(fullText);
+        } else {
+            badge.className = "status-badge status-bad";
+            badge.style.display = "inline-block";
+            badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Unreadable (Likely Image/Scanned)`;
+        }
 
-    // Analyze Keywords Live
+    } catch (e) {
+        alert("Error parsing PDF: " + e.message);
+    }
+    hideLoader();
+}
+
+/* =========================================
+   2. INTELLIGENT AUTO-FILL (Regex)
+   ========================================= */
+function autoFillData(text) {
+    // Basic Extraction logic
+    const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/;
+    const phoneRegex = /(\+?\d[\d -]{8,15}\d)/;
+    
+    const emailMatch = text.match(emailRegex);
+    const phoneMatch = text.match(phoneRegex);
+    
+    if(emailMatch) document.getElementById('inName').value = "Name Detected (Verify)"; // Name is hard to extract reliably
+    if(emailMatch) {
+        let contact = emailMatch[0];
+        if(phoneMatch) contact += " | " + phoneMatch[0];
+        document.getElementById('inContact').value = contact;
+    }
+
+    // Attempt to split sections (Naive approach)
+    // This is "simulated" extraction for demo. Real extraction needs complex AI models.
+    document.getElementById('inSum').value = text.slice(0, 300) + "..."; 
+    
+    updateCV();
+    alert("Data Extracted! Please review the fields.");
+}
+
+/* =========================================
+   3. AI TRANSFORMATION LOGIC
+   ========================================= */
+function analyzeKeywords() {
+    const jd = document.getElementById('inJD').value.toLowerCase();
+    const cloud = document.getElementById('kwCloud');
+    
+    // Extract potential skills (Capitalized words or known tech terms)
+    const words = jd.match(/\b[A-Z][a-zA-Z]+\b/g) || [];
+    const unique = [...new Set(words)].filter(w => w.length > 3).slice(0, 10);
+    jdKeywords = unique;
+
+    cloud.innerHTML = unique.map(w => `<span class="kw-tag">${w}</span>`).join('');
+    
+    // Update Score
+    const cvText = document.body.innerText.toLowerCase();
+    let matches = unique.filter(w => cvText.includes(w.toLowerCase())).length;
+    let score = Math.round((matches/unique.length)*100) || 0;
+    document.getElementById('matchScore').innerText = score + "% Match";
+}
+
+function transformCV() {
+    if(jdKeywords.length === 0) return alert("Please paste a New Job Description first!");
+    if(experiences.length === 0 && !document.getElementById('inSum').value) return alert("Please upload or write your CV first!");
+
+    showLoader("AI Tailoring to Job...");
+
+    setTimeout(() => {
+        // 1. Rewrite Summary
+        const role = document.getElementById('inTitle').value || "Professional";
+        const topKw = jdKeywords.slice(0, 3).join(", ");
+        const newSum = `Adaptive ${role} with a proven history of utilizing ${topKw} to drive results. Previously ${document.getElementById('inSum').value.slice(0, 50)}...`;
+        document.getElementById('inSum').value = newSum;
+
+        // 2. Inject Keywords into Experience
+        experiences.forEach((exp, i) => {
+            const kw = jdKeywords[i % jdKeywords.length]; // Cycle through keywords
+            if(kw) {
+                exp.desc += `\n• Leveraged ${kw} to optimize workflows and enhance project delivery.`;
+            }
+        });
+        
+        // 3. Add Missing Skills
+        const currentSkills = document.getElementById('inSkills').value;
+        const missing = jdKeywords.filter(k => !currentSkills.includes(k));
+        if(missing.length > 0) {
+            document.getElementById('inSkills').value += (currentSkills ? ", " : "") + missing.join(", ");
+        }
+
+        renderExp();
+        updateCV();
+        hideLoader();
+        alert("Transformation Complete! Your CV is now tailored to the new job.");
+    }, 2000);
+}
+
+/* =========================================
+   4. CV BUILDER FUNCTIONS
+   ========================================= */
+function updateCV() {
+    document.getElementById('outName').innerText = val('inName') || 'YOUR NAME';
+    document.getElementById('outContact').innerText = val('inContact');
+    document.getElementById('outSum').innerText = val('inSum');
+    document.getElementById('outSkills').innerText = val('inSkills');
     analyzeKeywords();
 }
 
-// --- DYNAMIC SECTIONS ---
 function addExp() {
-    expCount++;
-    const div = document.createElement('div');
-    div.className = 'form-section';
-    div.style.background = '#162032'; // Slightly different bg
-    div.innerHTML = `
-        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-            <label style="color:var(--accent)">Position #${expCount}</label>
-            <i class="fa-solid fa-trash" style="color:var(--danger); cursor:pointer;" onclick="this.parentElement.parentElement.remove(); renderExp();"></i>
-        </div>
-        <input class="exp-role" placeholder="Job Title" oninput="renderExp()">
-        <input class="exp-comp" placeholder="Company Name" oninput="renderExp()">
-        <input class="exp-date" placeholder="Date (e.g. 2020 - Present)" oninput="renderExp()">
-        <div style="position:relative;">
-            <textarea class="exp-desc" placeholder="• Key achievement..." oninput="renderExp()"></textarea>
-            <button class="ai-tool" style="position:absolute; bottom:5px; right:5px;" onclick="injectBullet(this)">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> Build Bullet
-            </button>
-        </div>
-    `;
-    document.getElementById('expContainer').appendChild(div);
+    experiences.push({ role:'', comp:'', date:'', desc:'' });
+    renderExp();
 }
-
 function renderExp() {
-    const container = document.getElementById('outExp');
-    container.innerHTML = '';
-    
-    document.querySelectorAll('#expContainer .form-section').forEach(el => {
-        const role = el.querySelector('.exp-role').value;
-        const comp = el.querySelector('.exp-comp').value;
-        const date = el.querySelector('.exp-date').value;
-        const desc = el.querySelector('.exp-desc').value;
-        
-        if(role || comp) {
-            container.innerHTML += `
-                <div class="cv-item">
-                    <div class="cv-row"><span>${role}</span><span>${date}</span></div>
-                    <div class="cv-sub">${comp}</div>
-                    <ul class="cv-list">${desc.split('\n').map(l => l ? `<li>${l}</li>` : '').join('')}</ul>
-                </div>
-            `;
-        }
-    });
-    analyzeKeywords(); // Update score
+    const list = document.getElementById('expList');
+    list.innerHTML = experiences.map((e,i) => `
+        <div style="background:#f8fafc; padding:10px; border:1px solid #cbd5e1; margin-bottom:10px; border-radius:6px; position:relative;">
+            <i class="fa-solid fa-xmark" style="position:absolute; top:5px; right:5px; cursor:pointer; color:red;" onclick="experiences.splice(${i},1); renderExp(); updateCV()"></i>
+            <input placeholder="Title" value="${e.role}" oninput="experiences[${i}].role=this.value; renderExpPreview()">
+            <input placeholder="Company" value="${e.comp}" oninput="experiences[${i}].comp=this.value; renderExpPreview()">
+            <input placeholder="Date" value="${e.date}" oninput="experiences[${i}].date=this.value; renderExpPreview()">
+            <textarea placeholder="• Achievements..." oninput="experiences[${i}].desc=this.value; renderExpPreview()">${e.desc}</textarea>
+        </div>
+    `).join('');
+    renderExpPreview();
+}
+function renderExpPreview() {
+    document.getElementById('outExp').innerHTML = experiences.map(e => `
+        <div class="cv-item">
+            <div class="cv-row"><span>${e.role}</span><span>${e.date}</span></div>
+            <div class="cv-sub">${e.comp}</div>
+            <ul class="cv-list">${e.desc.split('\n').filter(x=>x).map(x=>`<li>${x.replace('•','').trim()}</li>`).join('')}</ul>
+        </div>
+    `).join('');
 }
 
 function addEdu() {
-    const div = document.createElement('div');
-    div.className = 'form-section';
-    div.style.background = '#162032';
-    div.innerHTML = `
-        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-            <label style="color:var(--success)">Education</label>
-            <i class="fa-solid fa-trash" style="color:var(--danger); cursor:pointer;" onclick="this.parentElement.parentElement.remove(); renderEdu();"></i>
-        </div>
-        <input class="edu-deg" placeholder="Degree" oninput="renderEdu()">
-        
-        <input class="edu-uni" list="uniList" placeholder="University (Start typing...)" oninput="renderEdu()">
-        <datalist id="uniList">
-            ${universities.map(u => `<option value="${u}">`).join('')}
-        </datalist>
-
-        <input class="edu-date" placeholder="Year" oninput="renderEdu()">
-    `;
-    document.getElementById('eduContainer').appendChild(div);
+    educations.push({ deg:'', school:'', date:'' });
+    renderEdu();
 }
-
 function renderEdu() {
-    const container = document.getElementById('outEdu');
-    container.innerHTML = '';
-    document.querySelectorAll('#eduContainer .form-section').forEach(el => {
-        const deg = el.querySelector('.edu-deg').value;
-        const uni = el.querySelector('.edu-uni').value;
-        const date = el.querySelector('.edu-date').value;
-        
-        if(deg || uni) {
-            container.innerHTML += `
-                <div class="cv-item">
-                    <div class="cv-row"><span>${deg}</span><span>${date}</span></div>
-                    <div class="cv-sub">${uni}</div>
-                </div>
-            `;
-        }
-    });
+    const list = document.getElementById('eduList');
+    list.innerHTML = educations.map((e,i) => `
+        <div style="background:#f8fafc; padding:10px; border:1px solid #cbd5e1; margin-bottom:10px; border-radius:6px;">
+            <input placeholder="Degree" value="${e.deg}" oninput="educations[${i}].deg=this.value; renderEduPreview()">
+            <input placeholder="University" value="${e.school}" oninput="educations[${i}].school=this.value; renderEduPreview()">
+            <input placeholder="Year" value="${e.date}" oninput="educations[${i}].date=this.value; renderEduPreview()">
+        </div>
+    `).join('');
+    renderEduPreview();
+}
+function renderEduPreview() {
+    document.getElementById('outEdu').innerHTML = educations.map(e => `
+        <div class="cv-item">
+            <div class="cv-row"><span>${e.deg}</span><span>${e.date}</span></div>
+            <div class="cv-sub">${e.school}</div>
+        </div>
+    `).join('');
 }
 
-// --- AI & INTELLIGENCE ---
-
-function analyzeKeywords() {
-    const jdText = val('jdInput').toLowerCase();
-    const cvText = document.getElementById('resume-page').innerText.toLowerCase();
-    const radar = document.getElementById('keywordRadar');
-    
-    if(jdText.length < 10) {
-        radar.innerHTML = '<small style="color:#64748b">Waiting for JD...</small>';
-        updateScore(0);
-        return;
-    }
-
-    // 1. Find Hard Skills in JD
-    const foundInJD = hardSkills.filter(s => jdText.includes(s.toLowerCase()));
-    
-    // 2. Check if present in CV
-    let matched = 0;
-    radar.innerHTML = foundInJD.map(kw => {
-        const isPresent = cvText.includes(kw.toLowerCase());
-        if(isPresent) matched++;
-        return `<span class="kw-tag ${isPresent ? 'found' : 'missing'}">${kw}</span>`;
-    }).join('');
-
-    // 3. Simple Frequency Match
-    const score = foundInJD.length > 0 ? Math.round((matched / foundInJD.length) * 100) : 50;
-    updateScore(score);
-}
-
-function updateScore(score) {
-    const bar = document.getElementById('atsBar');
-    const txt = document.getElementById('atsScore');
-    
-    bar.style.width = score + '%';
-    bar.style.background = score > 80 ? 'var(--success)' : (score > 50 ? 'var(--warning)' : 'var(--danger)');
-    txt.innerText = score + '%';
-    txt.style.color = bar.style.background;
-}
-
-// AI Bullet Builder
-function injectBullet(btn) {
-    const textarea = btn.parentElement.querySelector('textarea');
-    const role = val('inTitle').toLowerCase();
-    
-    let template = aiTemplates.gen;
-    if(role.includes('developer') || role.includes('engineer')) template = aiTemplates.dev;
-    else if(role.includes('manager') || role.includes('lead')) template = aiTemplates.mgr;
-    else if(role.includes('sales')) template = aiTemplates.sales;
-
-    // Insert at cursor or end
-    const current = textarea.value;
-    textarea.value = current + (current ? '\n' : '') + "• " + template;
-    renderExp();
-}
-
-function extractSkillsFromJD() {
-    const jd = val('jdInput').toLowerCase();
-    if(jd.length < 10) return alert("Please paste a Job Description first!");
-    
-    const found = hardSkills.filter(s => jd.includes(s.toLowerCase()));
-    document.getElementById('inSkills').value = found.join(", ");
-    updateCV();
-}
-
-// Generate Summary using "Logic AI"
-function generateSummary() {
-    const title = val('inTitle') || "Professional";
-    const skills = val('inSkills');
-    
-    const summary = `Results-oriented ${title} with proven expertise in ${skills || 'key industry domains'}. Dedicated to driving operational excellence and delivering high-quality solutions. Looking to leverage skills in a challenging environment.`;
-    
-    document.getElementById('inSum').value = summary;
-    updateCV();
-}
-
-// Helper
+// Helpers
 function val(id) { return document.getElementById(id).value; }
-function setText(oid, iid, def) { document.getElementById(oid).innerText = val(iid) || def; }
+function showLoader(text) { document.getElementById('loader').style.display = 'flex'; document.getElementById('loaderText').innerText = text; }
+function hideLoader() { document.getElementById('loader').style.display = 'none'; }
 
+// Init
+window.onload = function() { addExp(); addEdu(); }
 </script>
 
 </body>
-    </html>
+                </html>
     
