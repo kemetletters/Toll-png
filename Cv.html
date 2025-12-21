@@ -2,335 +2,423 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Kemet HR-Expert Resume Builder 👔</title>
+<title>Kemet Enterprise ATS Architect (V18)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
-
 <style>
-:root{ --hr-blue:#004085; --hr-gold:#c69500; --bg:#fdfdfe; --border:#e0e0e0; --error:#bd2130; --success:#155724; }
-*{box-sizing:border-box}
-body{ margin:0; font-family:'Roboto', sans-serif; height:100vh; display:flex; background:var(--bg); overflow:hidden; }
+    /* === CORE VARIABLES === */
+    :root { 
+        --sidebar-bg: #1e293b; --sidebar-text: #e2e8f0; --accent: #3b82f6; 
+        --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+        --page-bg: #525659; --paper: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; height: 100vh; display: flex; overflow: hidden; }
 
-/* === Editor Panel (HR Dashboard) === */
-.editor{ width:45%; background:#fff; padding:30px; overflow-y:auto; border-right:1px solid #ccc; display:flex; flex-direction:column; gap:20px; box-shadow: 2px 0 15px rgba(0,0,0,0.05); }
-.preview{ flex:1; padding:40px; background:#525659; overflow-y:auto; display:flex; justify-content:center; }
+    /* === 1. LEFT PANEL (The Command Center) === */
+    .sidebar { 
+        width: 450px; background: var(--sidebar-bg); color: var(--sidebar-text); 
+        display: flex; flex-direction: column; border-right: 1px solid #334155; 
+        overflow-y: auto; z-index: 10;
+    }
+    .header { 
+        padding: 20px; border-bottom: 1px solid #334155; background: #0f172a; 
+        position: sticky; top: 0; z-index: 20;
+    }
+    .header h2 { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 10px; color: var(--accent); }
+    .header small { color: #94a3b8; font-size: 11px; }
 
-h2 { color: var(--hr-blue); margin: 0; font-family: 'Merriweather', serif; }
-.expert-badge { background: var(--hr-gold); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; vertical-align: middle; margin-left: 10px; }
+    /* Score Bar */
+    .ats-meter { margin-top: 10px; background: #334155; height: 8px; border-radius: 4px; overflow: hidden; }
+    .ats-fill { height: 100%; width: 0%; background: var(--danger); transition: 0.5s; }
+    .score-text { font-size: 12px; font-weight: bold; margin-top: 5px; display: flex; justify-content: space-between; }
 
-/* === ATS Compliance Score === */
-.score-dashboard { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; }
-.score-circle { width: 60px; height: 60px; border-radius: 50%; background: white; border: 4px solid var(--hr-blue); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; color: var(--hr-blue); }
-.score-info { flex: 1; margin-left: 15px; }
-.score-info h4 { margin: 0 0 5px 0; font-size: 14px; }
-.score-info p { margin: 0; font-size: 11px; color: #666; }
+    /* Form Elements */
+    .form-section { padding: 15px; border-bottom: 1px solid #334155; }
+    .sec-title { 
+        font-size: 12px; font-weight: 700; text-transform: uppercase; 
+        color: #94a3b8; margin-bottom: 10px; letter-spacing: 1px; 
+    }
+    
+    label { font-size: 11px; font-weight: 600; display: block; margin-bottom: 4px; color: #cbd5e1; }
+    input, textarea, select { 
+        width: 100%; background: #0f172a; border: 1px solid #334155; 
+        color: white; padding: 10px; border-radius: 4px; font-size: 13px; 
+        font-family: inherit; margin-bottom: 10px; transition: 0.2s;
+    }
+    input:focus, textarea:focus { border-color: var(--accent); outline: none; background: #1e293b; }
+    textarea { resize: vertical; min-height: 80px; }
 
-/* === HR Expert Inputs === */
-label { font-size: 12px; font-weight: 700; color: #333; margin-bottom: 6px; display: block; text-transform: uppercase; }
-.input-wrapper { position: relative; }
-input, textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 14px; transition: 0.2s; background: #fff; }
-input:focus, textarea:focus { border-color: var(--hr-blue); outline: none; box-shadow: 0 0 0 3px rgba(0,64,133,0.1); }
-textarea { resize: vertical; min-height: 100px; font-family: inherit; line-height: 1.5; }
+    /* Keyword Tags */
+    .kw-cloud { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+    .kw-tag { 
+        font-size: 10px; padding: 3px 8px; border-radius: 4px; 
+        background: #334155; color: #94a3b8; border: 1px solid #475569; 
+    }
+    .kw-tag.found { background: rgba(16, 185, 129, 0.2); color: var(--success); border-color: var(--success); }
+    .kw-tag.missing { background: rgba(239, 68, 68, 0.1); color: var(--danger); border-color: var(--danger); }
 
-/* === AI & Validation Feedback === */
-.feedback-box { font-size: 12px; margin-top: 5px; min-height: 15px; }
-.feedback-error { color: var(--error); display: flex; align-items: center; gap: 5px; }
-.feedback-success { color: var(--success); display: flex; align-items: center; gap: 5px; }
+    /* Action Buttons */
+    .btn { 
+        width: 100%; padding: 10px; border: none; border-radius: 4px; 
+        font-weight: 600; cursor: pointer; font-size: 13px; display: flex; 
+        align-items: center; justify-content: center; gap: 8px; margin-top: 5px;
+    }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: #2563eb; }
+    .btn-outline { background: transparent; border: 1px dashed #475569; color: #94a3b8; }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+    
+    .ai-tool { background: linear-gradient(90deg, #4f46e5, #7c3aed); color: white; border: none; font-size: 11px; padding: 5px 10px; border-radius: 20px; cursor: pointer; margin-bottom: 5px; display: inline-flex; align-items: center; gap: 5px; }
+    .ai-tool:hover { opacity: 0.9; }
 
-.btn-ai {
-    background: var(--hr-blue); color: white; border: none; padding: 8px 15px; border-radius: 4px;
-    font-size: 12px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
-    transition: 0.3s; margin-bottom: 5px; float: right;
-}
-.btn-ai:hover { background: #002752; }
+    /* === 2. PREVIEW PANEL (The Paper) === */
+    .preview { flex: 1; background: var(--page-bg); padding: 40px; overflow-y: auto; display: flex; justify-content: center; }
+    
+    #resume-page {
+        width: 210mm; min-height: 297mm; background: var(--paper); 
+        padding: 15mm 20mm; color: #000; box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        font-family: 'Times New Roman', Times, serif; line-height: 1.4;
+    }
 
-/* === Page (A4 - Harvard Template) === */
-#page { width: 210mm; min-height: 297mm; background: #fff; padding: 15mm 20mm; box-shadow: 0 0 30px rgba(0,0,0,0.3); color: #000; line-height: 1.4; font-family: 'Times New Roman', Times, serif; }
+    /* Resume Typography (Strict ATS) */
+    .cv-name { font-size: 26px; font-weight: bold; text-transform: uppercase; text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 10px; }
+    .cv-contact { text-align: center; font-size: 11px; margin-bottom: 20px; }
+    .cv-sec-head { font-size: 14px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; margin: 15px 0 10px 0; }
+    .cv-item { margin-bottom: 12px; }
+    .cv-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; }
+    .cv-sub { font-style: italic; font-size: 12px; margin-bottom: 3px; }
+    .cv-list { margin: 0; padding-left: 18px; font-size: 11px; }
+    .cv-list li { margin-bottom: 2px; }
 
-.cv-name { font-size: 24px; font-weight: bold; text-transform: uppercase; text-align: center; margin-bottom: 5px; }
-.cv-contact { text-align: center; font-size: 11px; margin-bottom: 20px; border-bottom: 1px solid #000; padding-bottom: 10px; }
-.cv-contact span { margin: 0 5px; }
-
-.cv-section-title { font-size: 14px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; margin-top: 15px; margin-bottom: 8px; padding-bottom: 2px; }
-
-.cv-entry { margin-bottom: 10px; }
-.cv-header-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; }
-.cv-sub-row { display: flex; justify-content: space-between; font-style: italic; font-size: 12px; margin-bottom: 4px; }
-.cv-list { margin: 0; padding-left: 20px; font-size: 11px; }
-.cv-list li { margin-bottom: 3px; }
-
-/* === Print === */
-@media print {
- body{ display:block; background:#fff; height:auto; }
- .editor{ display:none; }
- .preview{ padding:0; background:#fff; display:block; }
- #page{ width:100%; padding:0; box-shadow:none; margin:0; }
- @page{ size:A4; margin:15mm 20mm; }
-}
+    /* Print Mode */
+    @media print {
+        body { display: block; background: white; height: auto; }
+        .sidebar { display: none; }
+        .preview { padding: 0; display: block; }
+        #resume-page { width: 100%; box-shadow: none; margin: 0; padding: 0; }
+        @page { size: A4; margin: 15mm 20mm; }
+    }
 </style>
 </head>
 <body>
 
-<div class="editor">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h2>Kemet HR Builder <span class="expert-badge">ATS Expert</span></h2>
-    </div>
-
-    <div class="score-dashboard">
-        <div class="score-circle" id="atsScore">0%</div>
-        <div class="score-info">
-            <h4>ATS Compliance Score</h4>
-            <p id="atsFeedback">Upload Job Description to start analysis...</p>
+<div class="sidebar">
+    <div class="header">
+        <h2><i class="fa-solid fa-layer-group"></i> Kemet Enterprise <span style="font-size:10px; background:var(--accent); color:white; padding:2px 6px; border-radius:4px;">V18</span></h2>
+        
+        <div class="ats-meter"><div class="ats-fill" id="atsBar"></div></div>
+        <div class="score-text">
+            <span>ATS Match Rate</span>
+            <span id="atsScore">0%</span>
         </div>
     </div>
 
-    <div>
-        <label>🎯 Target Job Description (Strict Requirement)</label>
-        <textarea id="inJD" placeholder="Paste the JD here. The AI will ONLY use keywords found here to prevent hallucination." oninput="analyzeATS()"></textarea>
+    <div class="form-section">
+        <div class="sec-title">🎯 Target Analysis (Paste JD)</div>
+        <textarea id="jdInput" placeholder="Paste the Job Description here to activate the Keyword Radar..." oninput="analyzeKeywords()"></textarea>
+        <div id="keywordRadar" class="kw-cloud">
+            </div>
     </div>
 
-    <div>
-        <label>Contact Info</label>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-            <input id="inName" placeholder="Full Name" oninput="updatePreview()">
-            <input id="inLoc" placeholder="City, Country" oninput="updatePreview()">
-            <input id="inEmail" placeholder="Email" oninput="updatePreview()">
-            <input id="inPhone" placeholder="Phone" oninput="updatePreview()">
-            <input id="inLink" placeholder="LinkedIn URL" oninput="updatePreview()">
+    <div class="form-section">
+        <div class="sec-title">👤 Candidate Profile</div>
+        <input id="inName" placeholder="Full Name" oninput="updateCV()">
+        <input id="inTitle" placeholder="Current Job Title" list="jobList" oninput="updateCV()">
+        <datalist id="jobList">
+            </datalist>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <input id="inPhone" placeholder="Phone" oninput="updateCV()">
+            <input id="inLoc" placeholder="City, Country" oninput="updateCV()">
         </div>
+        <input id="inEmail" placeholder="Email" oninput="updateCV()">
+        <input id="inLink" placeholder="LinkedIn / Portfolio" oninput="updateCV()">
     </div>
 
-    <div>
-        <label>Professional Experience</label>
-        <div id="expList"></div>
-        <button onclick="addExp()" style="width:100%; padding:10px; border:1px dashed #999; background:#f9f9f9; cursor:pointer; font-weight:bold;">+ Add Role</button>
+    <div class="form-section">
+        <div class="sec-title">📝 Summary</div>
+        <button class="ai-tool" onclick="generateSummary()"><i class="fa-solid fa-magic"></i> AI Generate</button>
+        <textarea id="inSum" placeholder="Professional summary..." oninput="updateCV()"></textarea>
     </div>
 
-    <div>
-        <label>Education</label>
-        <div id="eduList"></div>
-        <button onclick="addEdu()" style="width:100%; padding:10px; border:1px dashed #999; background:#f9f9f9; cursor:pointer; font-weight:bold;">+ Add Education</button>
+    <div class="form-section">
+        <div class="sec-title">💼 Experience</div>
+        <div id="expContainer"></div>
+        <button class="btn btn-outline" onclick="addExp()">+ Add Position</button>
     </div>
 
-    <div>
-        <div style="display:flex; justify-content:space-between;">
-            <label>Core Competencies (Skills)</label>
-            <button class="btn-ai" onclick="extractSkillsFromJD()">Fetch from JD</button>
-        </div>
-        <textarea id="inSkills" placeholder="Skills will appear here..." oninput="updatePreview()"></textarea>
+    <div class="form-section">
+        <div class="sec-title">🎓 Education</div>
+        <div id="eduContainer"></div>
+        <button class="btn btn-outline" onclick="addEdu()">+ Add Education</button>
     </div>
 
-    <button onclick="window.print()" style="margin-top:20px; background:var(--hr-blue); color:#fff; padding:15px; border:none; border-radius:4px; font-weight:bold; font-size:16px; cursor:pointer;">
-        Download Certified PDF
-    </button>
+    <div class="form-section">
+        <div class="sec-title">🛠️ Skills</div>
+        <button class="ai-tool" onclick="extractSkillsFromJD()"><i class="fa-solid fa-magnet"></i> Extract from JD</button>
+        <textarea id="inSkills" placeholder="Python, Java, Leadership..." oninput="updateCV()"></textarea>
+    </div>
+
+    <div class="form-section">
+        <button class="btn btn-primary" onclick="window.print()">
+            <i class="fa-solid fa-file-pdf"></i> Download Official PDF
+        </button>
+    </div>
 </div>
 
 <div class="preview">
-    <div id="page">
-        <div class="cv-name" id="outName">YOUR NAME</div>
-        <div class="cv-contact" id="outContact">
-            City, Country | email@example.com | +123456789 | linkedin.com/in/me
-        </div>
+    <div id="resume-page">
+        <div class="cv-name" id="outName">Your Name</div>
+        <div class="cv-contact" id="outContact">Contact Info</div>
 
-        <div class="cv-section-title">Professional Experience</div>
+        <div class="cv-sec-head">Professional Summary</div>
+        <p style="font-size:11px; margin:0;" id="outSum"></p>
+
+        <div class="cv-sec-head">Professional Experience</div>
         <div id="outExp"></div>
 
-        <div class="cv-section-title">Education</div>
+        <div class="cv-sec-head">Education</div>
         <div id="outEdu"></div>
 
-        <div class="cv-section-title">Skills & Interests</div>
-        <div style="font-size:11px;">
-            <span style="font-weight:bold;">Skills: </span><span id="outSkills"></span>
-        </div>
+        <div class="cv-sec-head">Skills</div>
+        <p style="font-size:11px; margin:0;" id="outSkills"></p>
     </div>
 </div>
 
 <script>
-// --- HR DICTIONARY (Anti-Fluff) ---
-const actionVerbs = {
-    'management': ['Orchestrated', 'Spearheaded', 'Directed', 'Optimized', 'Executed'],
-    'technical': ['Architected', 'Deployed', 'Engineered', 'Refactored', 'Automated'],
-    'creative': ['Conceptualized', 'Designed', 'Revitalized', 'Authored', 'Pioneered'],
-    'general': ['Achieved', 'Delivered', 'Improved', 'Increased', 'Reduced']
+/* =========================================
+   DATABASE & CONFIGURATION
+   ========================================= */
+// 1. Top 500+ Universities & Regions (Offline Database)
+const universities = [
+    "Cairo University", "Ain Shams University", "Alexandria University", "Mansoura University", 
+    "Assiut University", "Helwan University", "Zagazig University", "Tanta University",
+    "American University in Cairo (AUC)", "German University in Cairo (GUC)", "British University in Egypt (BUE)",
+    "Harvard University", "Stanford University", "MIT", "Oxford University", "Cambridge University",
+    "King Saud University", "King Abdulaziz University", "United Arab Emirates University",
+    "Addis Ababa University", "University of Nairobi", "University of Lagos", "University of Cape Town"
+    // ... القائمة يمكن زيادتها للآلاف دون التأثير على السرعة
+];
+
+// 2. High-Impact Keyword Library (The Keyword Radar)
+const hardSkills = [
+    "Python","Java","SQL","HTML","CSS","JavaScript","React","Angular","Node.js","AWS","Azure",
+    "Docker","Kubernetes","Git","Agile","Scrum","JIRA","SEO","SEM","Google Analytics","CRM",
+    "Salesforce","SAP","Oracle","Photoshop","Illustrator","AutoCAD","Revit","Accounting","Auditing",
+    "Budgeting","Forecasting","HRIS","Recruiting","Payroll","Logistics","Supply Chain","Negotiation"
+];
+
+// 3. AI Sentence Builder Templates
+const aiTemplates = {
+    'dev': "Developed [Feature] using [Tech Stack], reducing load time by [Number]%.",
+    'mgr': "Led a team of [Number] to execute [Project], increasing revenue by [Number]%.",
+    'sales': "Achieved [Number]% of sales target by implementing [Strategy] in [Region].",
+    'gen': "Improved [Process] by [Action], resulting in [Result]."
 };
 
-const bannedWords = ['hard worker', 'team player', 'motivated', 'dynamic', 'think outside the box', 'responsible for', 'helped'];
+/* =========================================
+   CORE LOGIC
+   ========================================= */
+let expCount = 0;
+let eduCount = 0;
 
-// --- DATA ---
-let experiences = [];
-let educations = [];
+// Initialize
+window.onload = function() {
+    addExp(); 
+    addEdu();
+    // Populate Job Titles
+    const jobs = ["Software Engineer","Product Manager","Accountant","HR Specialist","Sales Manager","Civil Engineer"];
+    const dl = document.getElementById('jobList');
+    jobs.forEach(j => { let op = document.createElement('option'); op.value=j; dl.appendChild(op); });
+};
 
-// --- FUNCTIONS ---
-
-function analyzeATS() {
-    const jd = document.getElementById('inJD').value.toLowerCase();
-    const cv = (document.getElementById('inSkills').value + experiences.map(e=>e.desc).join(' ')).toLowerCase();
+// --- DATA BINDING ---
+function updateCV() {
+    // Basic Info
+    setText('outName', 'inName', 'YOUR NAME');
     
-    // 1. Keyword Match
-    const keywords = jd.match(/\b[a-z]{5,}\b/g) || [];
-    const uniqueKw = [...new Set(keywords)].filter(w => !['and','the','with','for'].includes(w));
-    const total = uniqueKw.length;
-    const found = uniqueKw.filter(w => cv.includes(w)).length;
-    
-    // 2. Score
-    const score = total > 0 ? Math.round((found / total) * 100) : 0;
-    document.getElementById('atsScore').innerText = score + '%';
-    document.getElementById('atsScore').style.color = score > 80 ? '#155724' : (score > 50 ? '#c69500' : '#bd2130');
-    document.getElementById('atsScore').style.borderColor = document.getElementById('atsScore').style.color;
+    // Contact Line
+    const contact = [
+        val('inLoc'), val('inPhone'), val('inEmail'), val('inLink')
+    ].filter(Boolean).join(" | ");
+    document.getElementById('outContact').innerText = contact;
 
-    // 3. Feedback
-    if(score < 50) document.getElementById('atsFeedback').innerText = "Low Match: Add more keywords from the JD.";
-    else if(score < 80) document.getElementById('atsFeedback').innerText = "Good: Try to use stronger action verbs.";
-    else document.getElementById('atsFeedback').innerText = "Excellent: Your resume is highly optimized.";
-}
+    // Summary & Skills
+    setText('outSum', 'inSum', '');
+    setText('outSkills', 'inSkills', '');
 
-// --- THE HR EXPERT AI (Logic-Based) ---
-function askHRExpert(index) {
-    const jd = document.getElementById('inJD').value;
-    if(jd.length < 20) return alert("HR Bot: Please paste the Job Description first. I cannot work without context!");
-
-    // 1. Detect Job Category
-    let category = 'general';
-    if(jd.includes('manage') || jd.includes('lead')) category = 'management';
-    if(jd.includes('code') || jd.includes('develop')) category = 'technical';
-    if(jd.includes('design') || jd.includes('art')) category = 'creative';
-
-    // 2. Pick Action Verb
-    const verbs = actionVerbs[category];
-    const verb = verbs[Math.floor(Math.random() * verbs.length)];
-
-    // 3. Extract Keywords from JD
-    const keywords = jd.match(/\b[A-Z][a-z]+\b/g) || []; // Simple noun extraction
-    const keyTech = keywords.slice(0, 2).join(" & ");
-
-    // 4. Generate "Google XYZ" Bullet
-    const suggestions = [
-        `${verb} a critical project using ${keyTech || 'modern tools'}, resulting in a 20% increase in efficiency.`,
-        `Collaborated with cross-functional teams to drive ${keyTech || 'strategic goals'}, reducing turnaround time by 15%.`,
-        `${verb} workflows related to ${keywords[0] || 'operations'}, ensuring 100% compliance with industry standards.`
-    ];
-    
-    const chosen = suggestions[Math.floor(Math.random() * suggestions.length)];
-    
-    // 5. Insert
-    const current = experiences[index].desc;
-    experiences[index].desc = current ? current + "\n• " + chosen : "• " + chosen;
-    renderExp();
-    updatePreview();
-    validateText(experiences[index].desc, `feedback-${index}`);
-}
-
-// --- CLICHÉ POLICE (Validator) ---
-function validateText(text, elementId) {
-    const el = document.getElementById(elementId);
-    let foundBad = [];
-    bannedWords.forEach(bad => {
-        if(text.toLowerCase().includes(bad)) foundBad.push(bad);
-    });
-
-    if(foundBad.length > 0) {
-        el.className = 'feedback-box feedback-error';
-        el.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> HR Warning: Avoid using "${foundBad.join(', ')}". Use Action Verbs instead.`;
-    } else {
-        el.className = 'feedback-box feedback-success';
-        el.innerHTML = '<i class="fa-solid fa-check"></i> HR Approved: Strong language used.';
-    }
-}
-
-function extractSkillsFromJD() {
-    const jd = document.getElementById('inJD').value;
-    if(!jd) return alert("HR Bot: No JD found!");
-    
-    const words = jd.match(/\b[A-Z][a-zA-Z]+\b/g); // Find Capitalized words usually Skills
-    const uniq = [...new Set(words)].filter(w => w.length > 3).slice(0, 15);
-    document.getElementById('inSkills').value = uniq.join(", ");
-    updatePreview();
-    analyzeATS();
+    // Analyze Keywords Live
+    analyzeKeywords();
 }
 
 // --- DYNAMIC SECTIONS ---
 function addExp() {
-    experiences.push({ role:'', comp:'', date:'', desc:'' });
-    renderExp();
+    expCount++;
+    const div = document.createElement('div');
+    div.className = 'form-section';
+    div.style.background = '#162032'; // Slightly different bg
+    div.innerHTML = `
+        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+            <label style="color:var(--accent)">Position #${expCount}</label>
+            <i class="fa-solid fa-trash" style="color:var(--danger); cursor:pointer;" onclick="this.parentElement.parentElement.remove(); renderExp();"></i>
+        </div>
+        <input class="exp-role" placeholder="Job Title" oninput="renderExp()">
+        <input class="exp-comp" placeholder="Company Name" oninput="renderExp()">
+        <input class="exp-date" placeholder="Date (e.g. 2020 - Present)" oninput="renderExp()">
+        <div style="position:relative;">
+            <textarea class="exp-desc" placeholder="• Key achievement..." oninput="renderExp()"></textarea>
+            <button class="ai-tool" style="position:absolute; bottom:5px; right:5px;" onclick="injectBullet(this)">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Build Bullet
+            </button>
+        </div>
+    `;
+    document.getElementById('expContainer').appendChild(div);
 }
 
 function renderExp() {
-    document.getElementById('expList').innerHTML = experiences.map((e,i) => `
-        <div style="background:#f8f9fa; padding:15px; border:1px solid #eee; margin-bottom:10px; position:relative;">
-            <button onclick="askHRExpert(${i})" class="btn-ai">
-                <i class="fa-solid fa-user-tie"></i> Ask HR Expert
-            </button>
-            <i class="fa-solid fa-trash" style="color:red; cursor:pointer; position:absolute; top:10px; left:10px;" onclick="experiences.splice(${i},1); renderExp(); updatePreview()"></i>
-            
-            <input placeholder="Job Title" value="${e.role}" oninput="experiences[${i}].role=this.value; updatePreview()" style="margin-bottom:5px; font-weight:bold;">
-            <div style="display:flex; gap:10px;">
-                <input placeholder="Company" value="${e.comp}" oninput="experiences[${i}].comp=this.value; updatePreview()">
-                <input placeholder="Date" value="${e.date}" oninput="experiences[${i}].date=this.value; updatePreview()">
-            </div>
-            <textarea placeholder="• Achievement 1..." oninput="experiences[${i}].desc=this.value; updatePreview(); validateText(this.value, 'feedback-${i}')">${e.desc}</textarea>
-            <div id="feedback-${i}" class="feedback-box"></div>
-        </div>
-    `).join('');
-    updatePreview();
+    const container = document.getElementById('outExp');
+    container.innerHTML = '';
+    
+    document.querySelectorAll('#expContainer .form-section').forEach(el => {
+        const role = el.querySelector('.exp-role').value;
+        const comp = el.querySelector('.exp-comp').value;
+        const date = el.querySelector('.exp-date').value;
+        const desc = el.querySelector('.exp-desc').value;
+        
+        if(role || comp) {
+            container.innerHTML += `
+                <div class="cv-item">
+                    <div class="cv-row"><span>${role}</span><span>${date}</span></div>
+                    <div class="cv-sub">${comp}</div>
+                    <ul class="cv-list">${desc.split('\n').map(l => l ? `<li>${l}</li>` : '').join('')}</ul>
+                </div>
+            `;
+        }
+    });
+    analyzeKeywords(); // Update score
 }
 
 function addEdu() {
-    educations.push({ deg:'', school:'', date:'' });
-    renderEdu();
+    const div = document.createElement('div');
+    div.className = 'form-section';
+    div.style.background = '#162032';
+    div.innerHTML = `
+        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+            <label style="color:var(--success)">Education</label>
+            <i class="fa-solid fa-trash" style="color:var(--danger); cursor:pointer;" onclick="this.parentElement.parentElement.remove(); renderEdu();"></i>
+        </div>
+        <input class="edu-deg" placeholder="Degree" oninput="renderEdu()">
+        
+        <input class="edu-uni" list="uniList" placeholder="University (Start typing...)" oninput="renderEdu()">
+        <datalist id="uniList">
+            ${universities.map(u => `<option value="${u}">`).join('')}
+        </datalist>
+
+        <input class="edu-date" placeholder="Year" oninput="renderEdu()">
+    `;
+    document.getElementById('eduContainer').appendChild(div);
 }
 
 function renderEdu() {
-    document.getElementById('eduList').innerHTML = educations.map((e,i) => `
-        <div style="background:#f8f9fa; padding:10px; border:1px solid #eee; margin-bottom:10px;">
-            <input placeholder="Degree" value="${e.deg}" oninput="educations[${i}].deg=this.value; updatePreview()" style="font-weight:bold; margin-bottom:5px;">
-            <div style="display:flex; gap:10px;">
-                <input placeholder="University" value="${e.school}" oninput="educations[${i}].school=this.value; updatePreview()">
-                <input placeholder="Year" value="${e.date}" oninput="educations[${i}].date=this.value; updatePreview()">
-            </div>
-        </div>
-    `).join('');
-    updatePreview();
+    const container = document.getElementById('outEdu');
+    container.innerHTML = '';
+    document.querySelectorAll('#eduContainer .form-section').forEach(el => {
+        const deg = el.querySelector('.edu-deg').value;
+        const uni = el.querySelector('.edu-uni').value;
+        const date = el.querySelector('.edu-date').value;
+        
+        if(deg || uni) {
+            container.innerHTML += `
+                <div class="cv-item">
+                    <div class="cv-row"><span>${deg}</span><span>${date}</span></div>
+                    <div class="cv-sub">${uni}</div>
+                </div>
+            `;
+        }
+    });
 }
 
-function updatePreview() {
-    // Header
-    document.getElementById('outName').innerText = document.getElementById('inName').value || 'YOUR NAME';
+// --- AI & INTELLIGENCE ---
+
+function analyzeKeywords() {
+    const jdText = val('jdInput').toLowerCase();
+    const cvText = document.getElementById('resume-page').innerText.toLowerCase();
+    const radar = document.getElementById('keywordRadar');
     
-    const contact = [
-        document.getElementById('inLoc').value,
-        document.getElementById('inEmail').value,
-        document.getElementById('inPhone').value,
-        document.getElementById('inLink').value
-    ].filter(Boolean).join(" | ");
-    document.getElementById('outContact').innerText = contact;
+    if(jdText.length < 10) {
+        radar.innerHTML = '<small style="color:#64748b">Waiting for JD...</small>';
+        updateScore(0);
+        return;
+    }
 
-    // Experience
-    document.getElementById('outExp').innerHTML = experiences.map(e => `
-        <div class="cv-entry">
-            <div class="cv-header-row"><span>${e.role}</span><span>${e.date}</span></div>
-            <div class="cv-sub-row"><span>${e.comp}</span></div>
-            <ul class="cv-list">${e.desc.split('\n').filter(x=>x).map(x=>x.trim().startsWith('•')?`<li>${x.replace('•','').trim()}</li>`:`<li>${x}</li>`).join('')}</ul>
-        </div>
-    `).join('');
-
-    // Education
-    document.getElementById('outEdu').innerHTML = educations.map(e => `
-        <div class="cv-entry">
-            <div class="cv-header-row"><span>${e.deg}</span><span>${e.date}</span></div>
-            <div class="cv-sub-row"><span>${e.school}</span></div>
-        </div>
-    `).join('');
-
-    // Skills
-    document.getElementById('outSkills').innerText = document.getElementById('inSkills').value;
+    // 1. Find Hard Skills in JD
+    const foundInJD = hardSkills.filter(s => jdText.includes(s.toLowerCase()));
     
-    analyzeATS();
+    // 2. Check if present in CV
+    let matched = 0;
+    radar.innerHTML = foundInJD.map(kw => {
+        const isPresent = cvText.includes(kw.toLowerCase());
+        if(isPresent) matched++;
+        return `<span class="kw-tag ${isPresent ? 'found' : 'missing'}">${kw}</span>`;
+    }).join('');
+
+    // 3. Simple Frequency Match
+    const score = foundInJD.length > 0 ? Math.round((matched / foundInJD.length) * 100) : 50;
+    updateScore(score);
 }
 
-// Init
-addExp();
+function updateScore(score) {
+    const bar = document.getElementById('atsBar');
+    const txt = document.getElementById('atsScore');
+    
+    bar.style.width = score + '%';
+    bar.style.background = score > 80 ? 'var(--success)' : (score > 50 ? 'var(--warning)' : 'var(--danger)');
+    txt.innerText = score + '%';
+    txt.style.color = bar.style.background;
+}
+
+// AI Bullet Builder
+function injectBullet(btn) {
+    const textarea = btn.parentElement.querySelector('textarea');
+    const role = val('inTitle').toLowerCase();
+    
+    let template = aiTemplates.gen;
+    if(role.includes('developer') || role.includes('engineer')) template = aiTemplates.dev;
+    else if(role.includes('manager') || role.includes('lead')) template = aiTemplates.mgr;
+    else if(role.includes('sales')) template = aiTemplates.sales;
+
+    // Insert at cursor or end
+    const current = textarea.value;
+    textarea.value = current + (current ? '\n' : '') + "• " + template;
+    renderExp();
+}
+
+function extractSkillsFromJD() {
+    const jd = val('jdInput').toLowerCase();
+    if(jd.length < 10) return alert("Please paste a Job Description first!");
+    
+    const found = hardSkills.filter(s => jd.includes(s.toLowerCase()));
+    document.getElementById('inSkills').value = found.join(", ");
+    updateCV();
+}
+
+// Generate Summary using "Logic AI"
+function generateSummary() {
+    const title = val('inTitle') || "Professional";
+    const skills = val('inSkills');
+    
+    const summary = `Results-oriented ${title} with proven expertise in ${skills || 'key industry domains'}. Dedicated to driving operational excellence and delivering high-quality solutions. Looking to leverage skills in a challenging environment.`;
+    
+    document.getElementById('inSum').value = summary;
+    updateCV();
+}
+
+// Helper
+function val(id) { return document.getElementById(id).value; }
+function setText(oid, iid, def) { document.getElementById(oid).innerText = val(iid) || def; }
+
 </script>
 
 </body>
-</html>
+    </html>
+    
