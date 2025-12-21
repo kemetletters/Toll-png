@@ -1,281 +1,292 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kemet Executive Suite V14 💎</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <style>
-        :root { --primary: #1a252f; --accent: #c0392b; --pass: #27ae60; --avg: #f39c12; --fail: #c0392b; --bg: #ecf0f1; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: #2c3e50; }
-        .container { max-width: 900px; margin: 0 auto; }
-        
-        /* Tabs System */
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { flex: 1; padding: 15px; background: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; color: #7f8c8d; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .tab-btn.active { background: var(--primary); color: white; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-        
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+<meta charset="UTF-8">
+<title>Harvard Standard Resume Builder (V23)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    /* === RESET & BASE === */
+    :root { --sidebar-w: 400px; --bg: #e2e8f0; --primary: #0f172a; --accent: #2563eb; }
+    * { box-sizing: border-box; outline: none; }
+    body { margin: 0; display: flex; height: 100vh; font-family: 'Segoe UI', sans-serif; background: var(--bg); overflow: hidden; }
 
-        /* Scanner Box */
-        .box { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .input-group { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
-        input, select { padding: 12px; border: 2px solid #bdc3c7; border-radius: 8px; font-size: 15px; width: 100%; box-sizing: border-box; }
-        .btn-action { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 16px; transition: 0.3s; }
-        .btn-action:hover { background: #a93226; }
+    /* === LEFT SIDEBAR (EDITOR) === */
+    .editor {
+        width: var(--sidebar-w); background: #fff; border-right: 1px solid #ccc;
+        display: flex; flex-direction: column; z-index: 10;
+        box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+    }
+    .editor-header {
+        padding: 15px 20px; background: var(--primary); color: white;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .editor-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
 
-        /* Report Styles */
-        .grade-banner { text-align: center; padding: 20px; background: #fdfefe; border: 1px solid #eee; border-radius: 10px; margin-bottom: 20px; }
-        .final-badge { font-size: 48px; font-weight: 900; color: var(--primary); display: inline-block; padding: 5px 25px; border-radius: 12px; background: #ecf0f1; }
-        
-        .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 25px; }
-        @media(max-width:600px){ .metrics-grid { grid-template-columns: repeat(2, 1fr); } }
-        .metric-item { text-align: center; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #eee; }
-        .chart-tiny { width: 60px; height: 60px; margin: 0 auto; position: relative; }
-        .chart-val { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-weight: bold; }
+    /* Inputs */
+    .section-label { font-size: 11px; font-weight: 800; text-transform: uppercase; color: #64748b; margin-bottom: 5px; letter-spacing: 1px; }
+    input, textarea {
+        width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px;
+        font-size: 13px; font-family: inherit; margin-bottom: 8px; transition: 0.2s;
+        background: #f8fafc;
+    }
+    input:focus, textarea:focus { border-color: var(--accent); background: #fff; }
+    textarea { resize: vertical; min-height: 60px; }
 
-        /* Action Plan Section */
-        .action-plan { border: 2px solid var(--primary); border-radius: 10px; overflow: hidden; margin-top: 30px; }
-        .plan-head { background: var(--primary); color: white; padding: 15px; font-weight: bold; font-size: 18px; display: flex; align-items: center; gap: 10px; }
-        .plan-body { padding: 20px; background: #fff; }
-        .issue-card { display: flex; align-items: flex-start; gap: 15px; padding: 15px; border-bottom: 1px solid #eee; }
-        .issue-card:last-child { border-bottom: none; }
-        .issue-icon { font-size: 24px; }
-        .issue-content h4 { margin: 0 0 5px 0; color: #c0392b; }
-        .issue-content p { margin: 0; font-size: 13px; color: #555; }
-        .fix-badge { display: inline-block; background: #e8f8f5; color: #27ae60; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-top: 5px; }
+    /* Buttons */
+    .btn { padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; width: 100%; }
+    .btn-primary { background: var(--accent); color: white; margin-top: 10px; }
+    .btn-ghost { background: #f1f5f9; color: #475569; border: 1px dashed #cbd5e1; margin-top: 5px; }
+    .btn-danger { color: #ef4444; background: transparent; width: auto; font-size: 11px; padding: 5px; }
 
-        /* Keyword Tool */
-        .kw-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-top: 20px; }
-        .kw-tag { background: #eaf2f8; color: #2980b9; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; border: 1px solid #d6eaf8; }
-        .kw-copy { cursor: pointer; font-size: 16px; opacity: 0.5; }
-        .kw-copy:hover { opacity: 1; }
+    /* Dynamic Item Card */
+    .card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; border-radius: 4px; margin-bottom: 5px; position: relative; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
 
-        .loader { display: none; text-align: center; padding: 30px; }
-    </style>
+    /* === RIGHT PREVIEW (A4 PAPER) === */
+    .preview-area {
+        flex: 1; display: flex; justify-content: center; overflow-y: auto; padding: 40px; background: #525659;
+    }
+    
+    /* HARVARD TEMPLATE STYLES (Strict & Clean) */
+    #resume {
+        width: 210mm; min-height: 297mm; background: white; 
+        padding: 0.5in 0.5in; /* Standard Margins */
+        box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        font-family: 'Times New Roman', Times, serif; /* The ATS Standard */
+        color: #000; line-height: 1.3;
+        text-align: left; direction: ltr; /* Force LTR */
+    }
+
+    .cv-name { text-align: center; font-size: 20pt; font-weight: bold; text-transform: uppercase; margin-bottom: 4pt; }
+    .cv-contact { text-align: center; font-size: 10pt; margin-bottom: 12pt; }
+    .cv-section-title {
+        font-size: 11pt; font-weight: bold; text-transform: uppercase;
+        border-bottom: 1px solid #000; margin-top: 10pt; margin-bottom: 6pt;
+        padding-bottom: 2pt;
+    }
+    
+    .cv-item { margin-bottom: 6pt; }
+    .cv-header-row { display: flex; justify-content: space-between; font-size: 11pt; font-weight: bold; }
+    .cv-sub-row { display: flex; justify-content: space-between; font-size: 11pt; font-style: italic; margin-bottom: 2pt; }
+    .cv-bullets { margin: 0; padding-left: 15pt; font-size: 10.5pt; text-align: justify; }
+    .cv-bullets li { margin-bottom: 2pt; }
+
+    /* PRINT FIX */
+    @media print {
+        body { display: block; background: white; }
+        .editor { display: none; }
+        .preview-area { padding: 0; margin: 0; background: white; }
+        #resume { width: 100%; height: auto; box-shadow: none; margin: 0; padding: 0; }
+        @page { size: A4; margin: 0.5in; }
+    }
+</style>
 </head>
 <body>
 
-<div class="container">
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('scanTab')">🔍 فحص الموقع (Scanner)</button>
-        <button class="tab-btn" onclick="switchTab('kwTab')">🔑 الكلمات المفتاحية</button>
+<div class="editor">
+    <div class="editor-header">
+        <span style="font-weight:bold;">Harvard Builder</span>
+        <button onclick="loadDemo()" style="background:rgba(255,255,255,0.2); border:none; color:white; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:11px;">Load Demo</button>
     </div>
-
-    <div id="scanTab" class="tab-content active">
-        <div class="box">
-            <h2 style="margin-top:0;">Kemet Site Audit</h2>
-            <div class="input-group">
-                <input type="text" id="apiKey" placeholder="Google API Key (Required)">
-                <input type="text" id="url" placeholder="رابط الموقع (kemetletters.com)">
-                <button class="btn-action" onclick="runScan()">🚀 بدء الفحص وتنفيذ التحليل</button>
-            </div>
+    
+    <div class="editor-body">
+        
+        <div class="section-label">01. Header</div>
+        <input id="inName" placeholder="Full Name" oninput="draw()">
+        <input id="inLoc" placeholder="City, Country" oninput="draw()">
+        <div style="display:flex; gap:5px;">
+            <input id="inPhone" placeholder="Phone" oninput="draw()">
+            <input id="inEmail" placeholder="Email" oninput="draw()">
         </div>
+        <input id="inLink" placeholder="LinkedIn / Portfolio" oninput="draw()">
 
-        <div id="loader" class="loader">⏳ جاري سحب البيانات وتحليل المشاكل...</div>
+        <div class="section-label">02. Education</div>
+        <div id="eduList"></div>
+        <button class="btn btn-ghost" onclick="addEdu()">+ Add Education</button>
 
-        <div id="reportContainer" style="display:none;">
-            <div id="printArea" style="background:white; padding:20px; border-radius:10px;">
-                
-                <div style="display:flex; justify-content:space-between; margin-bottom:20px; border-bottom:2px solid #333; padding-bottom:10px;">
-                    <div><h2 style="margin:0;">تقرير شامل</h2><small id="rDate"></small></div>
-                    <div style="text-align:left;"><h3 style="margin:0;">KEMET SCAN</h3><small>Executive Report</small></div>
-                </div>
+        <div class="section-label">03. Experience</div>
+        <div id="expList"></div>
+        <button class="btn btn-ghost" onclick="addExp()">+ Add Experience</button>
 
-                <div class="grade-banner">
-                    <div>التقييم العام</div>
-                    <div id="finalGrade" class="final-badge">-</div>
-                    <div class="metrics-grid" style="margin-top:20px;">
-                        <div class="metric-item"><div class="chart-tiny"><canvas id="c1"></canvas><span class="chart-val" id="s1">0</span></div><small>Performance</small></div>
-                        <div class="metric-item"><div class="chart-tiny"><canvas id="c2"></canvas><span class="chart-val" id="s2">0</span></div><small>SEO</small></div>
-                        <div class="metric-item"><div class="chart-tiny"><canvas id="c3"></canvas><span class="chart-val" id="s3">0</span></div><small>Accessibility</small></div>
-                        <div class="metric-item"><div class="chart-tiny"><canvas id="c4"></canvas><span class="chart-val" id="s4">0</span></div><small>Practices</small></div>
-                    </div>
-                </div>
+        <div class="section-label">04. Skills</div>
+        <textarea id="inSkills" placeholder="Computer: Python, SQL...&#10;Languages: English, Arabic..." oninput="draw()"></textarea>
 
-                <div class="action-plan">
-                    <div class="plan-head">🛠️ خطة الإصلاح (Action Plan)</div>
-                    <div class="plan-body" id="issuesList">
-                        </div>
-                </div>
-
-                <h3 style="margin-top:30px; border-bottom:1px solid #eee; padding-bottom:10px;">📊 البيانات التقنية (Core Vitals)</h3>
-                <div id="techDetails" style="font-size:13px; color:#555;"></div>
-
-            </div>
-            <button class="btn-action" style="background:#2c3e50; margin-top:20px;" onclick="pdf()">📥 تحميل التقرير (PDF)</button>
-        </div>
+        <button class="btn btn-primary" onclick="window.print()">
+            <i class="fa-solid fa-download"></i> Save as PDF
+        </button>
     </div>
+</div>
 
-    <div id="kwTab" class="tab-content">
-        <div class="box">
-            <h2 style="margin-top:0;">مولّد الكلمات المفتاحية (Kemet Keywords)</h2>
-            <p style="font-size:14px; color:#666;">أداة توليد كلمات خاصة بنيش "مجوهرات كيميت" والتجارة الإلكترونية.</p>
-            <div class="input-group">
-                <input type="text" id="seedKw" placeholder="أدخل كلمة (مثال: necklace, gold, pharaonic)">
-                <button class="btn-action" onclick="genKeywords()">🔥 توليد الكلمات</button>
-            </div>
-            <div id="kwOutput" class="kw-results"></div>
-        </div>
+<div class="preview-area">
+    <div id="resume">
+        <div class="cv-name" id="outName">YOUR NAME</div>
+        <div class="cv-contact" id="outContact">City, Country | phone | email</div>
+
+        <div class="cv-section-title">Education</div>
+        <div id="outEdu"></div>
+
+        <div class="cv-section-title">Professional Experience</div>
+        <div id="outExp"></div>
+
+        <div class="cv-section-title">Additional Skills</div>
+        <div id="outSkills" class="cv-bullets" style="list-style:none; padding:0;"></div>
     </div>
-
 </div>
 
 <script>
-    // تهيئة المفتاح
-    window.onload = () => { if(localStorage.getItem('kKey')) document.getElementById('apiKey').value = localStorage.getItem('kKey'); };
-    function switchTab(id){ document.querySelectorAll('.tab-content').forEach(d=>d.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); document.getElementById(id).classList.add('active'); event.target.classList.add('active'); }
+// --- STATE MANAGEMENT ---
+let data = {
+    name: "", loc: "", phone: "", email: "", link: "",
+    edus: [],
+    exps: [],
+    skills: ""
+};
 
-    // --- SCANNER LOGIC ---
-    async function runScan(){
-        const k = document.getElementById('apiKey').value.trim();
-        let u = document.getElementById('url').value.trim();
-        if(!k || !u) return alert("مطلوب API Key والرابط");
-        
-        localStorage.setItem('kKey', k);
-        if(!u.startsWith('http')) u = 'https://'+u;
-
-        document.getElementById('loader').style.display='block';
-        document.getElementById('reportContainer').style.display='none';
-
-        try {
-            const r = await fetch(`https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${u}&key=${k}&strategy=mobile&category=PERFORMANCE&category=SEO&category=ACCESSIBILITY&category=BEST_PRACTICES`);
-            const d = await r.json();
-            if(d.error) throw new Error(d.error.message);
-            renderReport(d.lighthouseResult);
-        } catch(e) { alert(e.message); } 
-        finally { document.getElementById('loader').style.display='none'; }
+// --- INIT ---
+window.onload = () => {
+    // Attempt to load local storage
+    const saved = localStorage.getItem('harvardCV');
+    if(saved) {
+        data = JSON.parse(saved);
+        restoreInputs();
+    } else {
+        addEdu(); addExp();
     }
+    draw();
+};
 
-    function renderReport(lh){
-        document.getElementById('reportContainer').style.display='block';
-        document.getElementById('rDate').innerText = new Date().toLocaleString();
-        
-        const cat = lh.categories;
-        const p = Math.round(cat.performance.score*100);
-        const s = Math.round(cat.seo.score*100);
-        const a = Math.round(cat.accessibility.score*100);
-        const b = Math.round(cat['best-practices'].score*100);
+// --- RENDER FUNCTIONS (THE CORE) ---
+function draw() {
+    // 1. Save to Storage
+    data.name = val('inName');
+    data.loc = val('inLoc');
+    data.phone = val('inPhone');
+    data.email = val('inEmail');
+    data.link = val('inLink');
+    data.skills = val('inSkills');
+    localStorage.setItem('harvardCV', JSON.stringify(data));
 
-        // Final Grade
-        const avg = (p+s+a+b)/4;
-        const badge = document.getElementById('finalGrade');
-        badge.innerText = avg>=90?'A':avg>=75?'B':avg>=60?'C':'F';
-        badge.style.color = avg>=90?'#27ae60':avg>=60?'#f39c12':'#c0392b';
+    // 2. Render Header
+    txt('outName', data.name || "YOUR NAME");
+    let contact = [data.loc, data.phone, data.email, data.link].filter(Boolean).join(" | ");
+    txt('outContact', contact);
 
-        // Charts
-        draw('c1','s1',p); draw('c2','s2',s); draw('c3','s3',a); draw('c4','s4',b);
-
-        // --- Action Plan Generator (التنفيذ الذكي) ---
-        let issues = "";
-        
-        // 1. Content & Conversion Logic (محاكاة ShopScan)
-        // نستخدم SEO score كمؤشر للمحتوى
-        if(s < 90) {
-            issues += createIssue('📝', 'محتوى الصفحة ضعيف (Low Content)', 'عدد الكلمات قليل جداً (أقل من 300 كلمة). جوجل يفضل المحتوى الغني.', 'الحل: أضف وصفاً دقيقاً لكل منتج لا يقل عن 100 كلمة.');
-            issues += createIssue('🏷️', 'صور بدون وصف (Missing Alt Text)', 'محركات البحث لا ترى صورك.', 'الحل: اكتب وصفاً في خانة Alt Text لكل صورة.');
-        }
-        
-        // 2. Conversion Logic (بناءً على Best Practices)
-        if(b < 90) {
-            issues += createIssue('⭐', 'عوامل الثقة مفقودة (Missing Trust)', 'الموقع يفتقر لعناصر الطمأنينة.', 'الحل: أضف تقييمات العملاء (Reviews) وسياسات الإرجاع واضحة.');
-        }
-
-        // 3. Performance Logic
-        if(p < 80) {
-            issues += createIssue('🚀', 'الموقع بطيء (Slow LCP)', `زمن التحميل ${lh.audits['largest-contentful-paint'].displayValue}.`, 'الحل: حول الصور لصيغة WebP وقلل استخدام الفيديو في الخلفية.');
-            issues += createIssue('📏', 'اهتزاز المحتوى (CLS Issue)', 'الصفحة تهتز أثناء التحميل.', 'الحل: حدد أبعاد (Width/Height) لكل الصور في الكود.');
-        }
-
-        if(issues === "") issues = "<p style='text-align:center; color:green;'>✅ موقعك ممتاز! لا توجد مشاكل حرجة.</p>";
-        document.getElementById('issuesList').innerHTML = issues;
-
-        // Tech Details
-        document.getElementById('techDetails').innerHTML = `
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <div><b>FCP:</b> ${lh.audits['first-contentful-paint'].displayValue}</div>
-                <div><b>CLS:</b> ${lh.audits['cumulative-layout-shift'].displayValue}</div>
-                <div><b>Total Size:</b> ${(lh.audits['total-byte-weight'].numericValue/1024/1024).toFixed(2)} MB</div>
-                <div><b>HTTPS:</b> ${lh.audits['is-on-https'].score===1?'Yes':'No'}</div>
+    // 3. Render Education
+    const eduHTML = data.edus.map(e => `
+        <div class="cv-item">
+            <div class="cv-header-row">
+                <span>${e.uni}</span>
+                <span>${e.loc}</span>
             </div>
-        `;
-    }
-
-    function createIssue(icon, title, desc, fix){
-        return `
-        <div class="issue-card">
-            <div class="issue-icon">${icon}</div>
-            <div class="issue-content">
-                <h4>${title}</h4>
-                <p>${desc}</p>
-                <span class="fix-badge">${fix}</span>
+            <div class="cv-sub-row">
+                <span>${e.deg}</span>
+                <span>${e.date}</span>
             </div>
-        </div>`;
-    }
+        </div>
+    `).join('');
+    document.getElementById('outEdu').innerHTML = eduHTML;
 
-    // --- KEYWORD TOOL LOGIC ---
-    function genKeywords(){
-        const seed = document.getElementById('seedKw').value.toLowerCase().trim();
-        if(!seed) return alert("اكتب كلمة أولاً");
-        
-        // قاعدة بيانات كلمات (محاكاة ذكية للنيش الخاص بك)
-        const prefixes = ["Best", "Custom", "Handmade", "Gold", "Silver", "Ancient", "Pharaonic", "Luxury", "Personalized"];
-        const suffixes = ["Necklace", "Jewelry", "Pendant", "Ring", "Bracelet", "Cartouche", "Gift", "Art", "Symbols"];
-        const extras = ["for her", "for him", "with name", "meaning", "from Egypt", "shop online", "store"];
-
-        let results = [];
-        
-        // 1. خلط الكلمة المدخلة مع القوائم
-        if(seed.includes("kemet") || seed.includes("egypt")){
-            results.push(`${seed} jewelry meaning`);
-            results.push(`${seed} necklace gold`);
-            results.push(`custom ${seed} cartouche`);
-        }
-        
-        // توليد تباديل وتوافيق (Permutations)
-        for(let p of prefixes) results.push(`${p} ${seed}`);
-        for(let s of suffixes) results.push(`${seed} ${s}`);
-        for(let e of extras) results.push(`${seed} ${e}`);
-        
-        // دمج عشوائي لإنتاج كلمات طويلة
-        for(let i=0; i<5; i++){
-            results.push(`${prefixes[i]} ${seed} ${suffixes[i]}`);
-        }
-
-        // عرض النتائج
-        const div = document.getElementById('kwOutput');
-        div.innerHTML = results.map(k => `
-            <div class="kw-tag">
-                <span>${k}</span>
-                <span class="kw-copy" onclick="navigator.clipboard.writeText('${k}')">📋</span>
+    // 4. Render Experience
+    const expHTML = data.exps.map(e => `
+        <div class="cv-item">
+            <div class="cv-header-row">
+                <span>${e.role}</span>
+                <span>${e.date}</span>
             </div>
-        `).join('');
-    }
+            <div class="cv-sub-row">
+                <span>${e.comp}</span>
+                <span>${e.loc}</span>
+            </div>
+            <ul class="cv-bullets">
+                ${e.desc.split('\n').map(line => line.trim() ? `<li>${line.replace(/^[•-]\s*/, '')}</li>` : '').join('')}
+            </ul>
+        </div>
+    `).join('');
+    document.getElementById('outExp').innerHTML = expHTML;
 
-    // --- UTILS ---
-    function draw(cid, sid, v){
-        document.getElementById(sid).innerText = v;
-        new Chart(document.getElementById(cid), {
-            type:'doughnut',
-            data:{datasets:[{data:[v,100-v], backgroundColor:[v>=90?'#27ae60':v>=50?'#f39c12':'#c0392b','#eee'], borderWidth:0}]},
-            options:{cutout:'75%', events:[]}
-        });
-    }
+    // 5. Render Skills (Lines)
+    const skillLines = data.skills.split('\n').map(l => l.trim() ? `<div>${l}</div>` : '').join('');
+    document.getElementById('outSkills').innerHTML = skillLines;
+}
 
-    function pdf(){
-        const b = event.target; b.innerText="جاري التحميل...";
-        html2canvas(document.getElementById('printArea'), {scale:2}).then(c=>{
-            const p = new window.jspdf.jsPDF('p','mm','a4');
-            p.addImage(c.toDataURL('image/png'),'PNG',0,0,210,(c.height*210)/c.width);
-            p.save('Kemet-Executive-Report.pdf');
-            b.innerText="📥 تحميل التقرير (PDF)";
-        });
-    }
+// --- DYNAMIC INPUTS ---
+function addEdu() {
+    data.edus.push({ uni: "", loc: "", deg: "", date: "" });
+    renderEduInputs(); draw();
+}
+function addExp() {
+    data.exps.push({ role: "", comp: "", loc: "", date: "", desc: "" });
+    renderExpInputs(); draw();
+}
+
+function renderEduInputs() {
+    const container = document.getElementById('eduList');
+    container.innerHTML = data.edus.map((e, i) => `
+        <div class="card">
+            <div class="card-header">
+                <span style="font-size:10px; font-weight:bold; color:#aaa;">DEGREE ${i+1}</span>
+                <button class="btn-danger" onclick="removeEdu(${i})">Remove</button>
+            </div>
+            <input placeholder="University Name" value="${e.uni}" oninput="data.edus[${i}].uni=this.value; draw()">
+            <input placeholder="Degree (e.g. B.S. Computer Science)" value="${e.deg}" oninput="data.edus[${i}].deg=this.value; draw()">
+            <div style="display:flex; gap:5px;">
+                <input placeholder="Location" value="${e.loc}" oninput="data.edus[${i}].loc=this.value; draw()">
+                <input placeholder="Year" value="${e.date}" oninput="data.edus[${i}].date=this.value; draw()">
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderExpInputs() {
+    const container = document.getElementById('expList');
+    container.innerHTML = data.exps.map((e, i) => `
+        <div class="card">
+            <div class="card-header">
+                <span style="font-size:10px; font-weight:bold; color:#aaa;">ROLE ${i+1}</span>
+                <button class="btn-danger" onclick="removeExp(${i})">Remove</button>
+            </div>
+            <input placeholder="Job Title" value="${e.role}" oninput="data.exps[${i}].role=this.value; draw()" style="font-weight:bold;">
+            <input placeholder="Company" value="${e.comp}" oninput="data.exps[${i}].comp=this.value; draw()">
+            <div style="display:flex; gap:5px;">
+                <input placeholder="Location" value="${e.loc}" oninput="data.exps[${i}].loc=this.value; draw()">
+                <input placeholder="Date" value="${e.date}" oninput="data.exps[${i}].date=this.value; draw()">
+            </div>
+            <textarea placeholder="• Achievement 1&#10;• Achievement 2" oninput="data.exps[${i}].desc=this.value; draw()">${e.desc}</textarea>
+        </div>
+    `).join('');
+}
+
+function removeEdu(i) { data.edus.splice(i, 1); renderEduInputs(); draw(); }
+function removeExp(i) { data.exps.splice(i, 1); renderExpInputs(); draw(); }
+
+// --- HELPERS ---
+function val(id) { return document.getElementById(id).value; }
+function txt(id, t) { document.getElementById(id).innerText = t; }
+
+function restoreInputs() {
+    document.getElementById('inName').value = data.name;
+    document.getElementById('inLoc').value = data.loc;
+    document.getElementById('inPhone').value = data.phone;
+    document.getElementById('inEmail').value = data.email;
+    document.getElementById('inLink').value = data.link;
+    document.getElementById('inSkills').value = data.skills;
+    renderEduInputs();
+    renderExpInputs();
+}
+
+function loadDemo() {
+    data = {
+        name: "KARIM AHMED", loc: "Cairo, Egypt", phone: "+20 100 123 4567", email: "karim@example.com", link: "linkedin.com/in/karim",
+        edus: [{ uni: "Cairo University", loc: "Giza, Egypt", deg: "Bachelor of Science in Computer Engineering", date: "May 2020" }],
+        exps: [{ role: "Senior Software Engineer", comp: "Tech Solutions", loc: "Cairo", date: "Jan 2021 – Present", desc: "Spearheaded the development of a new ATS-friendly resume builder, increasing user retention by 40%.\nOptimized database queries, reducing load times by 2 seconds." }],
+        skills: "Languages: Arabic (Native), English (Fluent)\nTechnical: HTML, CSS, JavaScript, React, Python"
+    };
+    restoreInputs();
+    draw();
+}
 </script>
 
 </body>
-  </html>
-  
+            </html>
+            
