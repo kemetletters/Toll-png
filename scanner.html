@@ -3,74 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kemet Scan Pro 📊</title>
+    <title>Kemet Scan Pro Ultimate</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
-        :root { --primary: #2c3e50; --good: #2ecc71; --avg: #f1c40f; --poor: #e74c3c; --bg: #f8f9fa; }
+        :root { --primary: #2c3e50; --good: #0cce6b; --avg: #ffa400; --poor: #ff4e42; --bg: #f3f4f6; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; }
         
-        .container { max-width: 850px; margin: 0 auto; }
-        
-        /* تصميم مربع البحث */
-        .search-box { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); text-align: center; margin-bottom: 30px; border: 1px solid #eee; }
-        h1 { margin: 0 0 10px 0; color: var(--primary); font-size: 24px; }
-        .subtitle { color: #666; font-size: 14px; margin-bottom: 20px; }
-        
-        .input-group { display: flex; gap: 10px; max-width: 600px; margin: 0 auto; }
-        input { flex: 1; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; text-align: left; direction: ltr; }
-        input:focus { border-color: var(--primary); }
-        .btn-scan { background: linear-gradient(135deg, #2c3e50, #000); color: white; border: none; padding: 15px 30px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; min-width: 120px; }
-        
-        /* منطقة التقرير */
-        #reportArea { display: none; animation: fadeIn 0.5s; }
-        
-        /* شبكة الدرجات (الدوائر) */
-        .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        /* البحث */
+        .search-box { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; margin-bottom: 20px; }
+        .input-group { display: flex; gap: 10px; margin-top: 15px; }
+        input { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; direction: ltr; }
+        .btn-scan { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        .btn-scan:hover { opacity: 0.9; }
+
+        /* النتائج */
+        #reportArea { display: none; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
         @media (max-width: 600px) { .metrics-grid { grid-template-columns: repeat(2, 1fr); } }
         
-        .metric-card { background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid #eee; }
-        .chart-wrap { position: relative; width: 80px; height: 80px; margin: 0 auto 10px; }
-        .score-num { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: bold; font-size: 18px; color: #333; }
-        .metric-label { font-weight: bold; color: #555; font-size: 13px; }
+        .metric-card { background: white; padding: 15px; border-radius: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .chart-container { position: relative; height: 80px; width: 80px; margin: 0 auto; }
+        .score-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: bold; font-size: 18px; }
 
-        /* الأقسام التفصيلية */
-        .section { background: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; border-left: 5px solid var(--primary); box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
-        .sec-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 15px; }
-        .sec-title { font-size: 16px; font-weight: bold; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-        
-        /* صفوف البيانات */
-        .data-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f9f9f9; }
-        .data-row:last-child { border: none; }
-        .data-label { font-size: 13px; font-weight: 500; color: #444; }
-        .data-val { font-family: 'Courier New', monospace; font-weight: bold; font-size: 13px; }
-        
-        .badge { padding: 3px 8px; border-radius: 4px; font-size: 11px; color: white; font-weight: bold; }
-        .bg-good { background: var(--good); }
-        .bg-avg { background: var(--avg); color: #333; }
-        .bg-poor { background: var(--poor); }
+        .section { background: white; padding: 20px; border-radius: 10px; margin-bottom: 15px; border-left: 5px solid var(--primary); }
+        .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+        .badge { padding: 3px 8px; border-radius: 4px; color: white; font-weight: bold; font-size: 11px; }
+        .bg-good { background: var(--good); } .bg-avg { background: var(--avg); color: #333; } .bg-poor { background: var(--poor); }
 
-        /* اللودر */
-        .loader { display: none; text-align: center; padding: 50px; }
-        .spinner { width: 50px; height: 50px; border: 5px solid #ddd; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s infinite linear; margin: 0 auto 15px; }
+        /* لودر */
+        .loader { display: none; text-align: center; padding: 30px; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #ddd; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s infinite linear; margin: 0 auto 10px; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 
-        /* زر PDF */
-        .pdf-btn-area { margin-top: 30px; text-align: center; }
-        .btn-pdf { background: #e74c3c; color: white; border: none; padding: 12px 40px; border-radius: 30px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3); transition: 0.3s; display: none; }
-        .btn-pdf:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4); }
+        .btn-pdf { width: 100%; background: #e74c3c; color: white; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 16px; display: none; }
     </style>
-  </head>
-  <body>
+</head>
+<body>
 
 <div class="container">
     <div class="search-box">
-        <h1>Kemet Scan Pro 🔍</h1>
-        <p class="subtitle">فحص احترافي للموقع (SEO, Speed, Security) مطابق للمعايير العالمية</p>
+        <h2 style="margin:0; color:var(--primary);">Kemet Scan Pro ⚡</h2>
+        <p style="color:#666; font-size:14px;">فحص شامل (Performance, SEO, Accessibility)</p>
         <div class="input-group">
             <input type="text" id="urlInput" placeholder="kemetletters.com">
             <button class="btn-scan" onclick="runAudit()">فحص الآن</button>
@@ -79,110 +57,183 @@
 
     <div id="loader" class="loader">
         <div class="spinner"></div>
-        <p style="color:#666; font-size:14px;">جاري الاتصال بسيرفرات Google وتحليل الموقع...<br>قد يستغرق الأمر 15-30 ثانية</p>
+        <p>جاري الاتصال بجوجل وتحليل الموقع...<br><small>(قد يستغرق 20 ثانية)</small></p>
     </div>
 
     <div id="reportContainer">
-        <div id="reportContent" style="background:#f8f9fa; padding:10px;"> <div style="text-align:center; margin-bottom:20px;">
-                <h2 id="rTitle" style="margin:0; color:#333;">تقرير الفحص التقني</h2>
-                <p id="rUrl" style="margin:5px 0; color:#666; font-size:12px;"></p>
-                <p id="rDate" style="margin:0; color:#888; font-size:11px;"></p>
+        <div id="reportContent" style="padding:10px; background: white;">
+            <div style="text-align:center; margin-bottom:20px;">
+                <h3 id="rUrl" style="margin:0; direction:ltr;"></h3>
+                <small id="rDate" style="color:#777;"></small>
             </div>
 
             <div class="metrics-grid">
-                <div class="metric-card">
-                    <div class="chart-wrap"><canvas id="cPerf"></canvas><span class="score-num" id="sPerf">0</span></div>
-                    <span class="metric-label">الأداء (Performance)</span>
-                </div>
-                <div class="metric-card">
-                    <div class="chart-wrap"><canvas id="cSeo"></canvas><span class="score-num" id="sSeo">0</span></div>
-                    <span class="metric-label">SEO</span>
-                </div>
-                <div class="metric-card">
-                    <div class="chart-wrap"><canvas id="cAcc"></canvas><span class="score-num" id="sAcc">0</span></div>
-                    <span class="metric-label">سهولة الوصول</span>
-                </div>
-                <div class="metric-card">
-                    <div class="chart-wrap"><canvas id="cBest"></canvas><span class="score-num" id="sBest">0</span></div>
-                    <span class="metric-label">أفضل الممارسات</span>
-                </div>
+                <div class="metric-card"><div class="chart-container"><canvas id="cPerf"></canvas><span class="score-text" id="sPerf">0</span></div><small>الأداء</small></div>
+                <div class="metric-card"><div class="chart-container"><canvas id="cSeo"></canvas><span class="score-text" id="sSeo">0</span></div><small>SEO</small></div>
+                <div class="metric-card"><div class="chart-container"><canvas id="cAcc"></canvas><span class="score-text" id="sAcc">0</span></div><small>الوصول</small></div>
+                <div class="metric-card"><div class="chart-container"><canvas id="cBest"></canvas><span class="score-text" id="sBest">0</span></div><small>الممارسات</small></div>
             </div>
 
             <div class="section">
-                <div class="sec-header">
-                    <span class="sec-title">🚀 مؤشرات السرعة (Core Web Vitals)</span>
-                    <span class="badge bg-avg" id="vitalsBadge">ANALYSIS</span>
-                </div>
-                <div id="perfData"></div>
+                <h4 style="margin-top:0;">🚀 مؤشرات السرعة (Core Web Vitals)</h4>
+                <div id="perfRows"></div>
             </div>
 
-            <div class="section" style="border-color:#3498db;">
-                <div class="sec-header"><span class="sec-title" style="color:#3498db;">🔎 تحليل محركات البحث (SEO)</span></div>
-                <div id="seoData"></div>
+            <div class="section">
+                <h4 style="margin-top:0;">🔎 محركات البحث (SEO)</h4>
+                <div id="seoRows"></div>
             </div>
 
-            <div class="section" style="border-color:#9b59b6;">
-                <div class="sec-header"><span class="sec-title" style="color:#9b59b6;">🖼️ الصور والمحتوى</span></div>
-                <div id="imgData"></div>
-            </div>
-
-            <div class="section" style="border-color:#e74c3c;">
-                <div class="sec-header"><span class="sec-title" style="color:#e74c3c;">🛡️ الأمان والسيرفر</span></div>
-                <div id="secData"></div>
+             <div class="section">
+                <h4 style="margin-top:0;">🖼️ الصور والمحتوى</h4>
+                <div id="imgRows"></div>
             </div>
             
-            <div style="text-align:center; margin-top:20px; color:#aaa; font-size:10px;">Generated by Kemet Scan Pro</div>
+            <p style="text-align:center; font-size:10px; color:#aaa;">Report generated by Kemet Scan Pro</p>
         </div>
     </div>
 
-    <div class="pdf-btn-area">
-        <button class="btn-pdf" onclick="saveAsPDF()">📥 تحميل التقرير (PDF)</button>
-    </div>
-
+    <button class="btn-pdf" onclick="downloadPDF()">📥 تحميل التقرير (PDF)</button>
 </div>
+
 <script>
     async function runAudit() {
-        let url = document.getElementById('urlInput').value.trim();
-        if(!url) return alert("من فضلك اكتب رابط الموقع");
-        if(!url.startsWith('http')) url = 'https://' + url;
+        let input = document.getElementById('urlInput').value.trim();
+        
+        // التحقق من الرابط
+        if(!input) { alert("من فضلك اكتب رابط الموقع!"); return; }
+        if(!input.startsWith('http')) input = 'https://' + input;
 
-        // إخفاء النتائج وإظهار اللودر
-        document.getElementById('reportArea').style.display = 'none';
+        // إظهار اللودر
+        document.getElementById('reportContainer').style.display = 'none';
         document.querySelector('.btn-pdf').style.display = 'none';
         document.getElementById('loader').style.display = 'block';
 
-        // استدعاء Google Lighthouse API (مجاني وقوي)
-        const api = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${url}&strategy=mobile&category=PERFORMANCE&category=SEO&category=ACCESSIBILITY&category=BEST_PRACTICES`;
+        // رابط API
+        const api = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${input}&strategy=mobile&category=PERFORMANCE&category=SEO&category=ACCESSIBILITY&category=BEST_PRACTICES`;
 
         try {
-            const res = await fetch(api);
-            const json = await res.json();
+            const response = await fetch(api);
+            const data = await response.json();
+
+            // التحقق من وجود أخطاء من جوجل
+            if(data.error) {
+                throw new Error(data.error.message);
+            }
+
+            renderData(data.lighthouseResult);
             
-            if(json.error) throw new Error(json.error.message);
-
-            fillReport(json.lighthouseResult);
             document.getElementById('loader').style.display = 'none';
-            document.getElementById('reportArea').style.display = 'block';
-            document.querySelector('.btn-pdf').style.display = 'inline-block';
+            document.getElementById('reportContainer').style.display = 'block';
+            document.querySelector('.btn-pdf').style.display = 'block';
 
-        } catch (err) {
+        } catch (error) {
             document.getElementById('loader').style.display = 'none';
-            alert("فشل الفحص: " + err.message);
+            alert("حدث خطأ أثناء الفحص:\n" + error.message + "\n\nتأكد أن الرابط صحيح ويعمل.");
         }
     }
 
-    function fillReport(data) {
-        document.getElementById('rUrl').innerText = data.finalUrl;
+    function renderData(lh) {
+        document.getElementById('rUrl').innerText = lh.finalUrl;
         document.getElementById('rDate').innerText = new Date().toLocaleString();
 
-        // 1. الدرجات (Scores)
-        const sP = Math.round(data.categories.performance.score * 100);
-        const sS = Math.round(data.categories.seo.score * 100);
-        const sA = Math.round(data.categories.accessibility.score * 100);
-        const sB = Math.round(data.categories['best-practices'].score * 100);
+        // الدرجات
+        drawChart('cPerf', 'sPerf', lh.categories.performance.score * 100);
+        drawChart('cSeo', 'sSeo', lh.categories.seo.score * 100);
+        drawChart('cAcc', 'sAcc', lh.categories.accessibility.score * 100);
+        drawChart('cBest', 'sBest', lh.categories['best-practices'].score * 100);
 
-        updateChart('cPerf', sP, document.getElementById('sPerf'));
-        updateChart('cSeo', sS, document.getElementById('sSeo'));
+        const audits = lh.audits;
+
+        // تعبئة البيانات
+        document.getElementById('perfRows').innerHTML = `
+            ${makeRow('FCP (First Paint)', audits['first-contentful-paint'])}
+            ${makeRow('LCP (Largest Paint)', audits['largest-contentful-paint'])}
+            ${makeRow('TBT (Blocking Time)', audits['total-blocking-time'])}
+            ${makeRow('CLS (Layout Shift)', audits['cumulative-layout-shift'])}
+            ${makeRow('Speed Index', audits['speed-index'])}
+        `;
+
+        document.getElementById('seoRows').innerHTML = `
+            ${makeRow('Mobile Friendly', audits['viewport'])}
+            ${makeRow('Document Title', audits['document-title'])}
+            ${makeRow('Meta Description', audits['meta-description'])}
+            ${makeRow('Image Alt Text', audits['image-alt'])}
+            ${makeRow('Crawlable Links', audits['crawlable-anchors'])}
+        `;
+
+        const sizeMB = (audits['total-byte-weight'].numericValue / 1024 / 1024).toFixed(2) + ' MB';
+        document.getElementById('imgRows').innerHTML = `
+            ${makeRowHtml('Total Page Size', sizeMB, audits['total-byte-weight'].score)}
+            ${makeRow('Modern Image Formats', audits['modern-image-formats'])}
+            ${makeRow('Responsive Images', audits['uses-responsive-images'])}
+            ${makeRow('Offscreen Images', audits['offscreen-images'])}
+        `;
+    }
+
+    function drawChart(canvasId, textId, score) {
+        score = Math.round(score);
+        document.getElementById(textId).innerText = score;
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        
+        // مسح الشارت القديم لمنع التداخل
+        if(window[canvasId] instanceof Chart) window[canvasId].destroy();
+
+        let color = score >= 90 ? '#0cce6b' : (score >= 50 ? '#ffa400' : '#ff4e42');
+
+        window[canvasId] = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Score', 'Rest'],
+                datasets: [{ data: [score, 100-score], backgroundColor: [color, '#eee'], borderWidth: 0 }]
+            },
+            options: { cutout: '75%', plugins: { legend: false, tooltip: false }, maintainAspectRatio: false }
+        });
+    }
+
+    function makeRow(label, audit) {
+        if(!audit) return '';
+        let val = audit.displayValue || (audit.score === 1 ? 'Passed' : 'Failed');
+        return makeRowHtml(label, val, audit.score);
+    }
+
+    function makeRowHtml(label, val, score) {
+        let cls = 'bg-poor';
+        let txt = 'FAIL';
+        if(score >= 0.9) { cls = 'bg-good'; txt = 'PASS'; }
+        else if(score >= 0.5) { cls = 'bg-avg'; txt = 'AVG'; }
+        
+        return `<div class="row">
+            <span>${label}</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <b>${val}</b>
+                <span class="badge ${cls}">${txt}</span>
+            </div>
+        </div>`;
+    }
+
+    function downloadPDF() {
+        const btn = document.querySelector('.btn-pdf');
+        btn.innerText = "جاري إنشاء الملف... ⏳";
+        
+        const el = document.getElementById('reportContent');
+        
+        html2canvas(el, { scale: 2, useCORS: true }).then(canvas => {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const imgW = 210; 
+            const imgH = (canvas.height * imgW) / canvas.width;
+            
+            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgW, imgH);
+            pdf.save(`Kemet-Report.pdf`);
+            btn.innerText = "📥 تحميل التقرير (PDF)";
+        });
+    }
+</script>
+
+</body>
+</html>
+eo', sS, document.getElementById('sSeo'));
         updateChart('cAcc', sA, document.getElementById('sAcc'));
         updateChart('cBest', sB, document.getElementById('sBest'));
 
