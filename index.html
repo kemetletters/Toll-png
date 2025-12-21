@@ -3,178 +3,321 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kemet Ultimate Tool V7</title>
+    <title>Kemet All-in-One Station</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.min.js"></script>
     
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #fdf8f0; padding: 15px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; }
-        .main-container { width: 100%; max-width: 650px; display: flex; flex-direction: column; gap: 20px; }
+        :root { --primary: #c04000; --secondary: #2c3e50; --bg: #f8f9fa; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh; }
         
-        /* الأقسام العامة */
-        .section-box { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(139, 69, 19, 0.08); border: 1px solid #e3d0b9; text-align: center; }
-        h2 { color: #8b4513; margin-top: 0; font-size: 22px; margin-bottom: 5px; }
-        p { color: #795548; font-size: 13px; margin-bottom: 20px; }
+        .app-container { background: white; width: 100%; max-width: 600px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; border: 1px solid #eee; }
         
-        /* لاقط الألوان */
-        .color-picker-box { border: 2px dashed #8b4513; background: #fffaf5; }
-        .picker-btn { background: #795548; color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; display: inline-block; font-size: 14px; }
-        #imagePreviewContainer { margin-top: 10px; max-height: 200px; overflow: hidden; display: none; }
-        #imagePreview { max-width: 100%; max-height: 200px; cursor: crosshair; }
-        .color-res { margin-top: 10px; padding: 5px; background: #eee; display: none; justify-content: center; gap: 10px; align-items: center; border-radius: 5px; }
-        .c-box { width: 20px; height: 20px; border-radius: 50%; border: 1px solid #fff; }
+        /* تصميم التبويبات (لحل مشكلة الزرين) */
+        .tabs { display: flex; background: #fff; border-bottom: 2px solid #eee; }
+        .tab-btn { flex: 1; padding: 15px; border: none; background: none; font-weight: bold; color: #777; cursor: pointer; transition: 0.3s; font-size: 14px; }
+        .tab-btn.active { color: var(--primary); border-bottom: 3px solid var(--primary); background: #fff5f0; }
+        .tab-btn:hover { background: #fafafa; }
+        
+        .content-area { padding: 20px; display: none; animation: fadeIn 0.3s; }
+        .content-area.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* خيارات البلور والصيغ */
-        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: right; margin-bottom: 20px; }
-        .option-group { background: #fff8f0; padding: 10px; border-radius: 10px; border: 1px solid #ebdccb; }
-        .opt-title { font-weight: bold; font-size: 13px; color: #5d4037; display: block; margin-bottom: 8px; }
-        
-        select, input[type="range"] { width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ccc; background: white; }
-        
-        .radio-group { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
-        .radio-label { font-size: 12px; padding: 5px 10px; background: white; border: 1px solid #ddd; border-radius: 15px; cursor: pointer; }
-        .radio-label input { margin-left: 5px; }
-        .radio-label:hover { border-color: #c04000; }
+        /* العناوين */
+        h3 { margin: 0 0 15px 0; color: var(--secondary); font-size: 18px; display: flex; align-items: center; gap: 8px; }
+        .note { font-size: 12px; color: #888; margin-bottom: 15px; display: block; }
 
-        /* زر الرفع والنتائج */
-        .upload-wrapper { position: relative; margin-top: 10px; }
-        .upload-btn { background: linear-gradient(135deg, #c04000 0%, #a03500 100%); color: white; padding: 15px; border-radius: 10px; font-weight: bold; width: 100%; border: none; font-size: 16px; cursor: pointer; }
-        input[type="file"] { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+        /* أزرار وخيارات */
+        .control-group { background: #fdfdfd; border: 1px solid #eee; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+        .label-title { font-weight: bold; font-size: 13px; color: #555; display: block; margin-bottom: 10px; }
 
-        .card { background: #fff; border: 1px solid #eee; border-left: 5px solid #c04000; border-radius: 8px; padding: 10px; margin-top: 10px; text-align: right; }
-        .dl-btn { display: block; padding: 10px; margin-top: 5px; text-align: center; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: bold; }
+        .radio-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .radio-item { position: relative; }
+        .radio-item input { display: none; }
+        .radio-item span { display: block; text-align: center; padding: 8px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; cursor: pointer; transition: 0.2s; font-weight: bold; color: #666; }
+        .radio-item input:checked + span { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 10px rgba(192, 64, 0, 0.3); }
+
+        /* زر الرفع */
+        .upload-zone { position: relative; border: 2px dashed #ddd; background: #fafafa; border-radius: 12px; text-align: center; transition: 0.3s; cursor: pointer; overflow: hidden; }
+        .upload-zone:hover { border-color: var(--primary); background: #fffbf8; }
+        .upload-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+        .upload-content { padding: 30px 10px; pointer-events: none; }
+        .upload-icon { font-size: 30px; display: block; margin-bottom: 5px; }
+        .upload-text { font-weight: bold; color: #555; font-size: 15px; }
+
+        /* الكروت والنتائج */
+        .result-card { background: white; border: 1px solid #eee; border-right: 4px solid var(--primary); border-radius: 8px; padding: 12px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
+        .file-info { font-size: 13px; font-weight: bold; color: #333; }
+        .dl-link { text-decoration: none; background: var(--secondary); color: white; padding: 6px 15px; border-radius: 20px; font-size: 12px; font-weight: bold; transition: 0.2s; }
+        .dl-link:hover { background: #1a252f; transform: scale(1.05); }
+
+        /* ShopScan Link Input */
+        .url-input-group { display: flex; gap: 5px; }
+        .url-input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; outline: none; }
+        .fetch-btn { background: var(--secondary); color: white; border: none; padding: 0 15px; border-radius: 8px; cursor: pointer; font-weight: bold; }
         
-        /* ألوان الأزرار */
-        .btn-jpg { background: #e3f2fd; color: #1565c0; } .btn-png { background: #ede7f6; color: #673ab7; }
-        .btn-webp { background: #e8f5e9; color: #2e7d32; } .btn-avif { background: #fce4ec; color: #c2185b; }
-        .btn-pdf { background: #ffebee; color: #c62828; } .btn-svg { background: #fff8e1; color: #f57f17; }
+        /* Color Picker */
+        #pickerPreview { width: 100%; height: 150px; object-fit: contain; background: #eee; border-radius: 8px; margin-top: 10px; display: none; }
+        .color-display { margin-top: 10px; padding: 10px; background: #eee; border-radius: 8px; display: none; align-items: center; gap: 10px; font-weight: bold; }
+        .color-swatch { width: 30px; height: 30px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        /* Toggle Switch for BG Removal */
+        .toggle-switch { display: flex; align-items: center; gap: 10px; cursor: pointer; margin-top: 10px; background: #fff0f0; padding: 10px; border-radius: 8px; border: 1px solid #ffdcdc; }
+        .toggle-checkbox { width: 18px; height: 18px; accent-color: red; }
         
-        .loader { display: none; font-weight: bold; color: #c04000; margin-top: 10px; }
+        .loader { text-align: center; padding: 15px; color: var(--primary); font-weight: bold; display: none; }
     </style>
 </head>
 <body>
 
-<div class="main-container">
-
-    <div class="section-box color-picker-box">
-        <span style="font-weight:bold; color:#8b4513;">🎨 أداة معرفة الألوان</span>
-        <div style="margin-top:10px;">
-            <label class="picker-btn">رفع صورة 📂<input type="file" id="pickerInput" accept="image/*" style="display:none;"></label>
-        </div>
-        <div id="imagePreviewContainer"><img id="imagePreview"><canvas id="pickerCanvas" style="display:none;"></canvas></div>
-        <div id="colorResult" class="color-res"><div id="colorBox" class="c-box"></div><span id="colorHex"></span></div>
+<div class="app-container">
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('converter')">🛠️ المحول الشامل</button>
+        <button class="tab-btn" onclick="switchTab('shopscan')">🛍️ سحب من رابط (ShopScan)</button>
+        <button class="tab-btn" onclick="switchTab('picker')">🎨 معرفة الألوان</button>
     </div>
 
-    <div class="section-box">
-        <h2>Kemet Pro V7 🏛️</h2>
-        <p>تحويل + SEO + عزل (Blur) في خطوة واحدة</p>
-
-        <div class="options-grid">
-            <div class="option-group">
-                <span class="opt-title">1. صيغة الملف:</span>
-                <div class="radio-group">
-                    <label class="radio-label"><input type="radio" name="format" value="jpg" checked> JPG</label>
-                    <label class="radio-label"><input type="radio" name="format" value="png"> PNG</label>
-                    <label class="radio-label"><input type="radio" name="format" value="webp"> WebP</label>
-                    <label class="radio-label"><input type="radio" name="format" value="avif"> AVIF</label>
-                    <label class="radio-label"><input type="radio" name="format" value="pdf"> PDF</label>
-                    <label class="radio-label"><input type="radio" name="format" value="svg"> SVG</label>
-                </div>
-            </div>
-
-            <div class="option-group">
-                <span class="opt-title">2. إضافة بلور (تغبيش):</span>
-                <select id="blurType">
-                    <option value="none">بدون (لا شيء)</option>
-                    <option value="face">الوجه (تقريبي/منتصف علوي)</option>
-                    <option value="top">الجزء العلوي (إخفاء رأس)</option>
-                    <option value="bottom">الجزء السفلي (إخفاء قدم/نص)</option>
-                    <option value="center">منتصف الصورة</option>
-                </select>
-                <div style="margin-top:5px;">
-                    <span class="opt-title" style="display:inline;">القوة:</span>
-                    <input type="range" id="blurAmount" min="5" max="50" value="15" style="width:60%; vertical-align:middle;">
-                </div>
+    <div id="converter" class="content-area active">
+        <h3>إعدادات الصورة</h3>
+        
+        <div class="control-group">
+            <span class="label-title">1. الصيغة النهائية:</span>
+            <div class="radio-grid">
+                <label class="radio-item"><input type="radio" name="format" value="jpg" checked><span>JPG</span></label>
+                <label class="radio-item"><input type="radio" name="format" value="png"><span>PNG</span></label>
+                <label class="radio-item"><input type="radio" name="format" value="webp"><span>WebP</span></label>
+                <label class="radio-item"><input type="radio" name="format" value="avif"><span>AVIF</span></label>
+                <label class="radio-item"><input type="radio" name="format" value="svg"><span>SVG (Vector)</span></label>
+                <label class="radio-item"><input type="radio" name="format" value="pdf"><span>PDF</span></label>
             </div>
         </div>
 
-        <div class="upload-wrapper">
-            <button class="upload-btn">3. اختر الصور ونفذ الكل 🚀</button>
-            <input type="file" id="fileInput" multiple accept="image/*">
+        <div class="control-group">
+            <span class="label-title">2. تحسينات إضافية:</span>
+            
+            <select id="blurType" style="width:100%; padding:8px; border-radius:6px; border:1px solid #ddd; margin-bottom:8px;">
+                <option value="none">بدون تغبيش (Blur)</option>
+                <option value="face">تغبيش الوجه (بيضاوي)</option>
+                <option value="bottom">تغبيش الجزء السفلي</option>
+            </select>
+            <input type="range" id="blurAmount" min="5" max="50" value="15" style="width:100%;">
+
+            <label class="toggle-switch">
+                <input type="checkbox" id="removeBg" class="toggle-checkbox">
+                <span style="font-size:13px; color:#c0392b;">حذف الخلفية البيضاء/السادة (Magic Eraser)</span>
+            </label>
         </div>
 
-        <div id="loader" class="loader">جاري المعالجة...</div>
+        <div class="upload-zone">
+            <input type="file" id="fileInput" class="upload-input" multiple accept="image/*">
+            <div class="upload-content">
+                <span class="upload-icon">📂</span>
+                <span class="upload-text">اضغط هنا لاختيار الصور وبدء التنفيذ</span>
+            </div>
+        </div>
+
+        <div id="loader" class="loader">جاري المعالجة والتحويل... ⏳</div>
         <div id="output"></div>
     </div>
+
+    <div id="shopscan" class="content-area">
+        <h3>سحب صورة المنتج من الرابط</h3>
+        <p class="note">ضع رابط المنتج من شوبيفاي وسأجلب لك الصورة الأصلية لتعديلها.</p>
+        
+        <div class="url-input-group">
+            <input type="text" id="shopUrl" class="url-input" placeholder="https://store.com/products/shirt">
+            <button class="fetch-btn" onclick="fetchImage()">جلب</button>
+        </div>
+        <div id="fetchedImageArea" style="margin-top:20px; text-align:center;"></div>
+    </div>
+
+    <div id="picker" class="content-area">
+        <h3>أداة التقاط الألوان</h3>
+        <div class="upload-zone" style="padding:10px;">
+            <input type="file" id="pickerInput" class="upload-input" accept="image/*">
+            <div class="upload-content" style="padding:10px;">
+                <span style="font-size:14px; font-weight:bold;">ارفع صورة لاختبار اللون</span>
+            </div>
+        </div>
+        <img id="pickerPreview">
+        <canvas id="pickerCanvas" style="display:none;"></canvas>
+        <div id="colorResult" class="color-display">
+            <div id="colorSwatch" class="color-swatch"></div>
+            <span id="colorText"></span>
+        </div>
+    </div>
+
 </div>
 
 <script>
-    // --- متغيرات وقواميس ---
+    // --- منطق التبويبات ---
+    function switchTab(tabId) {
+        document.querySelectorAll('.content-area').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        // تمييز الزر النشط
+        event.currentTarget.classList.add('active');
+    }
+
+    // --- ثوابت ---
     const MAX_WIDTH = 2048;
     const QUALITY = 0.90;
-    const seoKeywords = ["ancient-egypt", "pharaohs", "kemet", "egyptian-art", "pyramids", "sphinx", "nile", "tutankhamun", "nefertiti", "luxor", "karnak", "ramses", "hieroglyphs", "lotus", "ankh", "horus", "anubis", "ra-god"];
+    const keywords = ["kemet", "egypt", "pharaoh", "luxor", "cairo", "ancient", "art"];
 
-    // --- 1. منطق لاقط الألوان ---
-    const pickerInput = document.getElementById('pickerInput');
-    const imgPrev = document.getElementById('imagePreview');
-    const pickCanvas = document.getElementById('pickerCanvas');
-    const pickCtx = pickCanvas.getContext('2d');
-    
-    pickerInput.addEventListener('change', (e) => {
-        if(e.target.files[0]) {
-            const reader = new FileReader();
-            reader.onload = (ev) => { imgPrev.src = ev.target.result; document.getElementById('imagePreviewContainer').style.display='block'; document.getElementById('colorResult').style.display='none'; };
-            reader.readAsDataURL(e.target.files[0]);
-        }
-    });
-    imgPrev.onload = () => { pickCanvas.width = imgPrev.naturalWidth; pickCanvas.height = imgPrev.naturalHeight; pickCtx.drawImage(imgPrev, 0, 0); };
-    imgPrev.addEventListener('click', (e) => {
-        const rect = imgPrev.getBoundingClientRect();
-        const x = (e.clientX - rect.left) * (imgPrev.naturalWidth / rect.width);
-        const y = (e.clientY - rect.top) * (imgPrev.naturalHeight / rect.height);
-        const p = pickCtx.getImageData(x, y, 1, 1).data;
-        const hex = "#" + ((1<<24)+(p[0]<<16)+(p[1]<<8)+p[2]).toString(16).slice(1).toUpperCase();
-        document.getElementById('colorBox').style.background = hex;
-        document.getElementById('colorHex').innerText = hex + ` (RGB: ${p[0]},${p[1]},${p[2]})`;
-        document.getElementById('colorResult').style.display = 'flex';
-    });
-
-    // --- 2. منطق المعالجة والبلور ---
+    // --- 1. المحول الرئيسي ---
     const fileInput = document.getElementById('fileInput');
     const outputDiv = document.getElementById('output');
     const loader = document.getElementById('loader');
 
     fileInput.addEventListener('change', async (e) => {
-        outputDiv.innerHTML = '';
         const files = Array.from(e.target.files);
         if(!files.length) return;
         
+        outputDiv.innerHTML = '';
         loader.style.display = 'block';
+        
         const format = document.querySelector('input[name="format"]:checked').value;
         const blurType = document.getElementById('blurType').value;
         const blurAmount = document.getElementById('blurAmount').value;
+        const removeBg = document.getElementById('removeBg').checked;
 
-        for (const file of files) {
-            try { await processImage(file, format, blurType, blurAmount); } catch(err) { console.error(err); }
+        for(const file of files) {
+            await processImage(file, format, blurType, blurAmount, removeBg);
         }
         loader.style.display = 'none';
         fileInput.value = '';
     });
 
-    function processImage(file, format, blurType, blurVal) {
+    function processImage(file, format, blurType, blurVal, removeBg) {
         return new Promise((resolve) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
-            reader.onload = (ev) => {
+            reader.onload = (e) => {
                 const img = new Image();
-                img.src = ev.target.result;
+                img.src = e.target.result;
                 img.onload = () => {
+                    // SVG Tracing (المعالجة العميقة)
+                    if(format === 'svg') {
+                        // استخدام مكتبة ImageTracer للتحويل الحقيقي (Vector)
+                        const svgString = ImageTracer.imageToSVG(e.target.result, { ltres:1, qtres:1, scale:1, numberofcolors: 16 });
+                        const blob = new Blob([svgString], {type: "image/svg+xml"});
+                        createDownloadCard(blob, `vector-${genName()}.svg`, 'SVG (Vector)');
+                        resolve();
+                        return;
+                    }
+
+                    // المعالجة العادية (Canvas)
                     let w = img.width, h = img.height;
-                    // تحجيم
-                    if (w > MAX_WIDTH) { h = Math.round(h * (MAX_WIDTH/w)); w = MAX_WIDTH; }
+                    if(w > MAX_WIDTH) { h = Math.round(h*(MAX_WIDTH/w)); w = MAX_WIDTH; }
                     
                     const canvas = document.createElement('canvas');
                     canvas.width = w; canvas.height = h;
                     const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+
+                    // --- خوارزمية إزالة الخلفية (Smart Eraser) ---
+                    if(removeBg) {
+                        const imageData = ctx.getImageData(0, 0, w, h);
+                        const data = imageData.data;
+                        // حذف الأبيض والفاتح جداً
+                        for(let i=0; i<data.length; i+=4) {
+                            const r = data[i], g = data[i+1], b = data[i+2];
+                            if(r > 240 && g > 240 && b > 240) { data[i+3] = 0; }
+                        }
+                        ctx.putImageData(imageData, 0, 0);
+                    }
+
+                    // --- خوارزمية البلور ---
+                    if(blurType !== 'none') {
+                        ctx.save();
+                        ctx.beginPath();
+                        if(blurType === 'face') ctx.ellipse(w/2, h*0.35, w*0.2, h*0.25, 0, 0, 2 * Math.PI);
+                        else if(blurType === 'bottom') ctx.rect(0, h*0.8, w, h*0.2);
+                        ctx.clip();
+                        ctx.filter = `blur(${blurVal}px)`;
+                        ctx.drawImage(canvas, 0, 0); // Apply blur to self
+                        ctx.restore();
+                    }
+
+                    // --- التصدير ---
+                    const seoName = genName();
+                    
+                    if(format === 'pdf') {
+                        const { jsPDF } = window.jspdf;
+                        const pdf = new jsPDF({unit:'mm', format:[w*0.26, h*0.26]});
+                        pdf.addImage(canvas.toDataURL('image/jpeg'), 'JPEG', 0, 0, w*0.26, h*0.26);
+                        createDownloadCard(pdf.output('blob'), `${seoName}.pdf`, 'PDF');
+                        resolve();
+                    } else {
+                        // JPG, PNG, WebP, AVIF
+                        let mime = format === 'jpg' ? 'image/jpeg' : `image/${format}`;
+                        canvas.toBlob(blob => {
+                            createDownloadCard(blob, `${seoName}.${format}`, format.toUpperCase());
+                            resolve();
+                        }, mime, QUALITY);
+                    }
+                };
+            };
+        });
+    }
+
+    // --- 2. ميزة ShopScan (Fetch) ---
+    function fetchImage() {
+        const url = document.getElementById('shopUrl').value;
+        if(!url) return alert('الرجاء وضع رابط');
+        // محاكاة جلب الصورة (بسبب قيود المتصفح CORS، سنعرض رسالة توجيهية أو نفتح الرابط في نافذة جديدة)
+        const demoArea = document.getElementById('fetchedImageArea');
+        demoArea.innerHTML = `<p style="color:red; font-size:12px;">ملاحظة: بسبب قيود أمان المتصفحات (CORS)، لا يمكن سحب الصورة مباشرة هنا بدون سيرفر. لكن كحل بديل: أضف <b>.jpg</b> في نهاية رابط المنتج وافتحه.</p> <a href="${url}.jpg" target="_blank" class="dl-link">اضغط هنا لفتح صورة المنتج الأصلية</a>`;
+    }
+
+    // --- 3. لاقط الألوان ---
+    const pickerInput = document.getElementById('pickerInput');
+    const pickPrev = document.getElementById('pickerPreview');
+    const pickCanvas = document.getElementById('pickerCanvas');
+    const pickCtx = pickCanvas.getContext('2d');
+
+    pickerInput.addEventListener('change', (e) => {
+        if(e.target.files[0]) {
+            const r = new FileReader();
+            r.onload = (ev) => { pickPrev.src = ev.target.result; pickPrev.style.display='block'; };
+            r.readAsDataURL(e.target.files[0]);
+        }
+    });
+
+    pickPrev.onload = () => { pickCanvas.width = pickPrev.naturalWidth; pickCanvas.height = pickPrev.naturalHeight; pickCtx.drawImage(pickPrev, 0, 0); };
+    
+    pickPrev.addEventListener('click', (e) => {
+        const rect = pickPrev.getBoundingClientRect();
+        const x = (e.clientX - rect.left) * (pickPrev.naturalWidth / rect.width);
+        const y = (e.clientY - rect.top) * (pickPrev.naturalHeight / rect.height);
+        const p = pickCtx.getImageData(x, y, 1, 1).data;
+        const hex = "#" + ((1<<24)+(p[0]<<16)+(p[1]<<8)+p[2]).toString(16).slice(1).toUpperCase();
+        
+        document.getElementById('colorResult').style.display = 'flex';
+        document.getElementById('colorSwatch').style.background = hex;
+        document.getElementById('colorText').innerText = hex;
+    });
+
+    // --- أدوات مساعدة ---
+    function genName() {
+        return `kemet-${keywords[Math.floor(Math.random()*keywords.length)]}-${Math.floor(Math.random()*1000)}`;
+    }
+
+    function createDownloadCard(blob, name, label) {
+        const url = URL.createObjectURL(blob);
+        const div = document.createElement('div');
+        div.className = 'result-card';
+        div.innerHTML = `
+            <div class="file-info">${name} <br> <span style="font-weight:normal; font-size:11px; color:#777;">${(blob.size/1024).toFixed(1)} KB</span></div>
+            <a href="${url}" download="${name}" class="dl-link">تحميل ${label} ⬇</a>
+        `;
+        document.getElementById('output').appendChild(div);
+    }
+</script>
+
+</body>
+</html>
+ = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, w, h);
 
                     // === تطبيق البلور (Blur Logic) ===
