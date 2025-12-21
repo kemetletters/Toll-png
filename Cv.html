@@ -2,120 +2,91 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Kemet ATS Builder – Advanced Safe</title>
+<title>Kemet ATS Builder – Master Edition</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
-:root{
- --primary:#0f172a;
- --accent:#2563eb;
- --bg:#f3f4f6;
-}
+:root{ --primary:#0f172a; --accent:#2563eb; --bg:#f3f4f6; --border:#e2e8f0; }
 *{box-sizing:border-box}
-body{
- margin:0;
- font-family:Inter,sans-serif;
- height:100vh;
- display:flex;
- background:var(--bg);
- overflow:hidden;
-}
-.editor{
- width:40%;
- background:#fff;
- padding:20px;
- overflow:auto;
- border-right:1px solid #ddd;
-}
-.preview{
- flex:1;
- padding:30px;
- background:#525659;
- overflow:auto;
- display:flex;
- justify-content:center;
-}
+body{ margin:0; font-family:'Inter',sans-serif; height:100vh; display:flex; background:var(--bg); overflow:hidden; }
+
+/* === Editor Panel === */
+.editor{ width:40%; background:#fff; padding:25px; overflow-y:auto; border-right:1px solid #ddd; display:flex; flex-direction:column; gap:15px; }
+.preview{ flex:1; padding:40px; background:#525659; overflow-y:auto; display:flex; justify-content:center; }
+
+/* === Page (A4) === */
 #page{
- width:210mm;
- min-height:297mm;
- background:#fff;
- padding:20mm;
- box-shadow:0 0 20px rgba(0,0,0,.3);
+ width:210mm; min-height:297mm; background:#fff; padding:20mm;
+ box-shadow:0 0 25px rgba(0,0,0,.25); color:#1e293b;
+ line-height:1.5;
 }
 
-/* ===== UI ===== */
-h2{margin:0}
-.small{font-size:12px;color:#555}
-label{font-size:12px;font-weight:600}
-input,textarea{
- width:100%;
- padding:9px;
- margin-bottom:10px;
- border:1px solid #ddd;
- border-radius:6px;
+/* === UI Elements === */
+h2{margin:0 0 5px 0; color:var(--primary)}
+.small{font-size:12px;color:#64748b; margin-bottom:15px;}
+label{font-size:12px;font-weight:700; color:#334155; margin-bottom:4px; display:block;}
+input,textarea,select{
+ width:100%; padding:10px; margin-bottom:10px;
+ border:1px solid var(--border); border-radius:6px;
+ font-family:inherit; transition:0.2s;
 }
-textarea{resize:vertical}
-.section{
- margin-top:18px;
- font-weight:700;
- color:var(--accent);
- border-bottom:1px dashed #ccc;
- padding-bottom:5px;
-}
-.score{
- background:#ecfeff;
- border:1px solid #67e8f9;
- padding:10px;
- border-radius:6px;
- margin:10px 0;
- font-weight:700;
-}
-.warn{font-size:12px;color:#b91c1c}
-.ok{font-size:12px;color:#15803d}
-.suggest{
- background:#f8fafc;
- border:1px dashed #cbd5f5;
- padding:8px;
- font-size:12px;
- margin-bottom:8px;
+input:focus, textarea:focus{ border-color:var(--accent); outline:none; }
+textarea{resize:vertical; min-height:80px;}
+
+/* Suggestions & Score */
+.score-box{ background:#f0f9ff; border:1px solid #bae6fd; padding:12px; border-radius:8px; margin-bottom:15px; }
+.score-val{ font-size:18px; font-weight:800; color:#0284c7; }
+.health-item{ font-size:12px; margin-top:4px; display:flex; align-items:center; gap:5px; }
+.ok{color:#16a34a} .warn{color:#dc2626}
+
+.section-divider{
+ margin-top:20px; border-bottom:2px dashed #e2e8f0;
+ padding-bottom:5px; margin-bottom:15px;
+ font-weight:800; color:var(--primary); font-size:14px; text-transform:uppercase; letter-spacing:0.5px;
 }
 
-/* ===== CV ===== */
-.header{
- border-bottom:2px solid #111;
- padding-bottom:10px;
- margin-bottom:15px;
-}
-.name{font-size:28px;font-weight:800;text-transform:uppercase}
-.title{font-size:16px;color:#444}
-.sec{margin-bottom:18px}
-.sec-title{
- font-size:14px;
- font-weight:700;
- text-transform:uppercase;
- border-bottom:1px solid #ddd;
- margin-bottom:8px;
-}
-.skills{display:flex;flex-wrap:wrap;gap:6px}
-.skill{
- background:#f3f4f6;
- padding:3px 8px;
- border-radius:4px;
- font-size:11px;
- font-weight:600;
-}
-.match{background:#dbeafe}
+/* Dynamic Lists */
+.dyn-item{ background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:6px; margin-bottom:10px; position:relative; }
+.btn-del{ position:absolute; top:8px; right:8px; color:#ef4444; cursor:pointer; font-size:12px; }
+.btn-add{ background:#eff6ff; color:var(--accent); border:1px dashed var(--accent); width:100%; padding:8px; cursor:pointer; font-weight:600; border-radius:6px; }
+.btn-add:hover{ background:var(--accent); color:#fff; }
 
-/* ===== Print ===== */
+/* Suggestion Chips */
+.chips{ display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px; }
+.chip{ background:#f1f5f9; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer; border:1px solid #cbd5e1; }
+.chip:hover{ background:#e2e8f0; }
+
+/* === CV Design (Preview) === */
+.cv-header{ border-bottom:2px solid #0f172a; padding-bottom:15px; margin-bottom:20px; }
+.cv-name{ font-size:32px; font-weight:900; text-transform:uppercase; color:#0f172a; line-height:1; }
+.cv-title{ font-size:16px; color:#475569; font-weight:600; margin-top:5px; letter-spacing:0.5px; }
+.cv-contact{ font-size:11px; color:#64748b; margin-top:10px; display:flex; gap:15px; flex-wrap:wrap; }
+.cv-contact span{ display:flex; align-items:center; gap:5px; }
+
+.cv-sec{ margin-bottom:25px; }
+.cv-sec-head{ font-size:13px; font-weight:800; text-transform:uppercase; color:var(--accent); border-bottom:1px solid #e2e8f0; margin-bottom:10px; padding-bottom:3px; }
+
+.cv-entry{ margin-bottom:12px; }
+.cv-row{ display:flex; justify-content:space-between; align-items:baseline; }
+.cv-role{ font-weight:700; font-size:14px; color:#1e293b; }
+.cv-date{ font-size:12px; font-weight:600; color:#64748b; }
+.cv-company{ font-size:13px; font-style:italic; color:#334155; margin-bottom:4px; }
+.cv-desc{ font-size:12px; margin:0; padding-left:16px; color:#334155; }
+.cv-desc li { margin-bottom:3px; }
+
+.cv-skills-cloud{ display:flex; flex-wrap:wrap; gap:6px; }
+.cv-skill{ background:#f1f5f9; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600; color:#334155; border:1px solid #e2e8f0; }
+.match{ background:#dbeafe; border-color:#93c5fd; color:#1e40af; } /* Highlight */
+
+/* Print */
 @media print{
- body{display:block;background:#fff}
- .editor{display:none}
- .preview{padding:0;background:#fff}
- #page{box-shadow:none;width:100%;padding:0}
- .match{background:#f3f4f6}
- @page{size:A4;margin:20mm}
+ body{ display:block; background:#fff; height:auto; overflow:visible; }
+ .editor{ display:none; }
+ .preview{ padding:0; background:#fff; display:block; }
+ #page{ width:100%; padding:0; box-shadow:none; margin:0; }
+ @page{ size:A4; margin:15mm 20mm; }
 }
 </style>
 </head>
@@ -123,117 +94,271 @@ textarea{resize:vertical}
 <body>
 
 <div class="editor">
-<h2>Kemet ATS Builder – Advanced</h2>
-<div class="small">All features are ATS-safe</div>
+    <div>
+        <h2>Kemet ATS Master</h2>
+        <div class="small">Real-time ATS scoring & Keyword matching</div>
+    </div>
 
-<div id="scoreBox" class="score">ATS Score: 0%</div>
-<div id="health"></div>
+    <div class="score-box">
+        <div id="scoreVal" class="score-val">Score: 0%</div>
+        <div id="healthCheck"></div>
+    </div>
 
-<label>Full Name</label>
-<input id="name">
+    <div class="section-divider">1. Personal Info</div>
+    <label>Full Name</label>
+    <input id="inName" placeholder="e.g. John Doe">
+    
+    <label>Job Title (Auto-Complete)</label>
+    <input id="inTitle" list="jobTitles" placeholder="Start typing... e.g. Software">
+    <datalist id="jobTitles">
+        </datalist>
 
-<label>Target Job Title</label>
-<input id="title">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div><label>Email</label><input id="inEmail" placeholder="me@mail.com"></div>
+        <div><label>Phone</label><input id="inPhone" placeholder="+1 234..."></div>
+        <div><label>Location</label><input id="inLoc" placeholder="City, Country"></div>
+        <div><label>LinkedIn</label><input id="inLink" placeholder="linkedin.com/in/..."></div>
+    </div>
 
-<label>Professional Summary</label>
-<textarea id="summary"></textarea>
+    <div class="section-divider">2. Target Job (For ATS Analysis)</div>
+    <label>Paste Job Description Here (Important!)</label>
+    <textarea id="inJD" placeholder="Paste the job description you are applying for to see magic..."></textarea>
+    <div id="jdSuggestions" class="chips"></div>
 
-<div class="section">Job Description</div>
-<textarea id="jd" placeholder="Paste job description here..."></textarea>
+    <div class="section-divider">3. Summary</div>
+    <textarea id="inSum" placeholder="Brief professional summary..."></textarea>
 
-<div class="section">Skills</div>
-<textarea id="skills" placeholder="Comma separated"></textarea>
+    <div class="section-divider">4. Experience</div>
+    <div id="expList"></div>
+    <button class="btn-add" onclick="addExp()">+ Add Position</button>
 
-<div class="section">Smart Suggestions</div>
-<div id="suggestions"></div>
+    <div class="section-divider">5. Education</div>
+    <div id="eduList"></div>
+    <button class="btn-add" onclick="addEdu()">+ Add Education</button>
 
-<button onclick="window.print()" style="margin-top:10px;width:100%;padding:10px;font-weight:700">
-Save ATS-Safe PDF
-</button>
+    <div class="section-divider">6. Skills</div>
+    <textarea id="inSkills" placeholder="Python, SEO, Management (Comma separated)"></textarea>
+
+    <button onclick="window.print()" style="margin-top:20px; background:var(--primary); color:#fff; padding:15px; border-radius:8px; font-weight:bold; cursor:pointer; width:100%;">
+        Download ATS-Friendly PDF
+    </button>
 </div>
 
 <div class="preview">
-<div id="page">
- <div class="header">
-  <div class="name" id="oName">YOUR NAME</div>
-  <div class="title" id="oTitle">JOB TITLE</div>
- </div>
+    <div id="page">
+        <div class="cv-header">
+            <div class="cv-name" id="outName">YOUR NAME</div>
+            <div class="cv-title" id="outTitle">TARGET JOB TITLE</div>
+            <div class="cv-contact" id="outContact"></div>
+        </div>
 
- <div class="sec">
-  <div class="sec-title">Professional Summary</div>
-  <p id="oSummary"></p>
- </div>
+        <div class="cv-sec">
+            <div class="cv-sec-head">Professional Summary</div>
+            <p class="cv-desc" id="outSum" style="font-size:13px; padding:0; line-height:1.6;"></p>
+        </div>
 
- <div class="sec">
-  <div class="sec-title">Skills</div>
-  <div class="skills" id="oSkills"></div>
- </div>
-</div>
+        <div class="cv-sec">
+            <div class="cv-sec-head">Work Experience</div>
+            <div id="outExp"></div>
+        </div>
+
+        <div class="cv-sec">
+            <div class="cv-sec-head">Education</div>
+            <div id="outEdu"></div>
+        </div>
+
+        <div class="cv-sec">
+            <div class="cv-sec-head">Skills</div>
+            <div class="cv-skills-cloud" id="outSkills"></div>
+        </div>
+    </div>
 </div>
 
 <script>
-const els=document.querySelectorAll('input,textarea');
-els.forEach(e=>e.oninput=update);
+// --- 1. Job Titles Database (Auto-Complete) ---
+const commonJobs = [
+    "Software Engineer", "Frontend Developer", "Backend Developer", "Full Stack Developer", "Data Scientist",
+    "Product Manager", "Project Manager", "UX/UI Designer", "Graphic Designer", "Marketing Manager",
+    "Sales Representative", "Customer Service", "Accountant", "Financial Analyst", "HR Manager",
+    "Operations Manager", "Business Analyst", "Content Writer", "SEO Specialist", "Social Media Manager",
+    "Administrative Assistant", "Executive Assistant", "Teacher", "Nurse", "Pharmacist"
+];
 
-function words(t){
- return t.toLowerCase().match(/\b[a-z]{3,}\b/g)||[];
+const dataList = document.getElementById('jobTitles');
+commonJobs.forEach(job => {
+    const opt = document.createElement('option');
+    opt.value = job;
+    dataList.appendChild(opt);
+});
+
+// --- 2. Dynamic Data Management ---
+let experiences = [];
+let educations = [];
+
+// Listeners
+document.querySelectorAll('input, textarea').forEach(el => el.addEventListener('input', updateCV));
+
+// --- 3. Functions ---
+
+function addExp() {
+    experiences.push({ role: '', company: '', date: '', desc: '' });
+    renderExpInputs();
+    updateCV();
+}
+function removeExp(i) { experiences.splice(i, 1); renderExpInputs(); updateCV(); }
+function updateExpData(i, f, v) { experiences[i][f] = v; updateCV(); }
+
+function renderExpInputs() {
+    document.getElementById('expList').innerHTML = experiences.map((e, i) => `
+        <div class="dyn-item">
+            <span class="btn-del" onclick="removeExp(${i})"><i class="fa-solid fa-trash"></i></span>
+            <input placeholder="Job Title" value="${e.role}" oninput="updateExpData(${i},'role',this.value)" style="font-weight:bold">
+            <input placeholder="Company" value="${e.company}" oninput="updateExpData(${i},'company',this.value)">
+            <input placeholder="Date (e.g. 2020 - Present)" value="${e.date}" oninput="updateExpData(${i},'date',this.value)">
+            <textarea placeholder="Key achievements..." oninput="updateExpData(${i},'desc',this.value)">${e.desc}</textarea>
+        </div>
+    `).join('');
 }
 
-function update(){
- oName.innerText=name.value||'YOUR NAME';
- oTitle.innerText=title.value||'JOB TITLE';
- oSummary.innerText=summary.value;
+function addEdu() {
+    educations.push({ deg: '', uni: '', date: '' });
+    renderEduInputs();
+    updateCV();
+}
+function removeEdu(i) { educations.splice(i, 1); renderEduInputs(); updateCV(); }
+function updateEduData(i, f, v) { educations[i][f] = v; updateCV(); }
 
- const jdWords=words(jd.value);
- const skillArr=skills.value.split(',').map(s=>s.trim()).filter(Boolean);
-
- oSkills.innerHTML='';
- let matched=0;
- skillArr.forEach(s=>{
-  const sp=document.createElement('span');
-  sp.className='skill';
-  if(jdWords.includes(s.toLowerCase())){
-    sp.classList.add('match'); matched++;
-  }
-  sp.innerText=s;
-  oSkills.appendChild(sp);
- });
-
- let score=0;
- if(summary.value.length>50) score+=25;
- if(skillArr.length>=5) score+=25;
- if(matched>=3) score+=25;
- if(jdWords.includes(title.value.toLowerCase())) score+=25;
-
- scoreBox.innerText=`ATS Score: ${score}%`;
-
- health.innerHTML='';
- health.innerHTML+=summary.value.length>50
-  ?'<div class="ok">✔ Summary length OK</div>'
-  :'<div class="warn">✖ Summary too short</div>';
-
- health.innerHTML+=skillArr.length>=5
-  ?'<div class="ok">✔ Skills count OK</div>'
-  :'<div class="warn">✖ Add more skills</div>';
-
- health.innerHTML+=matched>=3
-  ?'<div class="ok">✔ Keywords matched</div>'
-  :'<div class="warn">✖ Low keyword match</div>';
-
- suggestSkills(jdWords,skillArr);
+function renderEduInputs() {
+    document.getElementById('eduList').innerHTML = educations.map((e, i) => `
+        <div class="dyn-item">
+            <span class="btn-del" onclick="removeEdu(${i})"><i class="fa-solid fa-trash"></i></span>
+            <input placeholder="Degree" value="${e.deg}" oninput="updateEduData(${i},'deg',this.value)" style="font-weight:bold">
+            <input placeholder="University" value="${e.uni}" oninput="updateEduData(${i},'uni',this.value)">
+            <input placeholder="Year" value="${e.date}" oninput="updateEduData(${i},'date',this.value)">
+        </div>
+    `).join('');
 }
 
-function suggestSkills(jdWords,skillArr){
- suggestions.innerHTML='';
- const uniq=[...new Set(jdWords)];
- uniq.slice(0,15).forEach(w=>{
-  if(!skillArr.map(s=>s.toLowerCase()).includes(w)){
-   suggestions.innerHTML+=`<div class="suggest">Suggested: ${w}</div>`;
-  }
- });
+// --- 4. Main Update Logic (The Brain) ---
+function updateCV() {
+    // Basic Info
+    document.getElementById('outName').innerText = document.getElementById('inName').value || 'YOUR NAME';
+    document.getElementById('outTitle').innerText = document.getElementById('inTitle').value || 'TARGET JOB TITLE';
+    document.getElementById('outSum').innerText = document.getElementById('inSum').value;
+
+    // Contact Logic
+    const email = document.getElementById('inEmail').value;
+    const phone = document.getElementById('inPhone').value;
+    const loc = document.getElementById('inLoc').value;
+    const link = document.getElementById('inLink').value;
+    
+    let contactHTML = '';
+    if(email) contactHTML += `<span><i class="fa-solid fa-envelope"></i> ${email}</span>`;
+    if(phone) contactHTML += `<span><i class="fa-solid fa-phone"></i> ${phone}</span>`;
+    if(loc) contactHTML += `<span><i class="fa-solid fa-location-dot"></i> ${loc}</span>`;
+    if(link) contactHTML += `<span><i class="fa-brands fa-linkedin"></i> ${link}</span>`;
+    document.getElementById('outContact').innerHTML = contactHTML;
+
+    // Render Experience
+    document.getElementById('outExp').innerHTML = experiences.map(e => `
+        <div class="cv-entry">
+            <div class="cv-row">
+                <span class="cv-role">${e.role}</span>
+                <span class="cv-date">${e.date}</span>
+            </div>
+            <div class="cv-company">${e.company}</div>
+            <ul class="cv-desc">${e.desc.split('\n').filter(l=>l).map(l=>`<li>${l}</li>`).join('')}</ul>
+        </div>
+    `).join('');
+
+    // Render Education
+    document.getElementById('outEdu').innerHTML = educations.map(e => `
+        <div class="cv-entry">
+            <div class="cv-row">
+                <span class="cv-role">${e.deg}</span>
+                <span class="cv-date">${e.date}</span>
+            </div>
+            <div class="cv-company">${e.uni}</div>
+        </div>
+    `).join('');
+
+    // ATS Logic & Skills
+    analyzeATS();
 }
 
-update();
+function analyzeATS() {
+    const jdText = document.getElementById('inJD').value.toLowerCase();
+    const skillsText = document.getElementById('inSkills').value;
+    const jdWords = jdText.match(/\b[a-z]{3,}\b/g) || [];
+    
+    // Render Skills with Matching
+    const skillsArr = skillsText.split(',').map(s => s.trim()).filter(Boolean);
+    const skillsContainer = document.getElementById('outSkills');
+    skillsContainer.innerHTML = '';
+    
+    let matchedCount = 0;
+    skillsArr.forEach(skill => {
+        const sLower = skill.toLowerCase();
+        const isMatch = jdWords.includes(sLower);
+        if(isMatch) matchedCount++;
+        
+        const tag = document.createElement('span');
+        tag.className = `cv-skill ${isMatch ? 'match' : ''}`;
+        tag.innerText = skill;
+        skillsContainer.appendChild(tag);
+    });
+
+    // Score Calculation
+    let score = 0;
+    let health = '';
+
+    // Criteria 1: Basics
+    if(document.getElementById('inName').value) score += 10;
+    if(document.getElementById('inTitle').value) score += 10;
+    if(document.getElementById('inEmail').value) score += 10;
+
+    // Criteria 2: Content Depth
+    if(experiences.length > 0) score += 20;
+    if(educations.length > 0) score += 10;
+    
+    // Criteria 3: ATS Keywords
+    if(skillsArr.length >= 5) score += 20;
+    if(jdText.length > 10 && matchedCount > 0) {
+        score += 20; // Bonus for matching JD
+    }
+
+    // Health Check Messages
+    if(score < 50) health += '<div class="health-item warn"><i class="fa-solid fa-triangle-exclamation"></i> Missing core sections</div>';
+    else health += '<div class="health-item ok"><i class="fa-solid fa-check"></i> Core sections good</div>';
+
+    if(jdText.length > 10 && matchedCount === 0) health += '<div class="health-item warn"><i class="fa-solid fa-magnifying-glass"></i> No keywords matched from Job Desc!</div>';
+    else if(matchedCount > 0) health += `<div class="health-item ok"><i class="fa-solid fa-bolt"></i> ${matchedCount} Keywords matched!</div>`;
+
+    document.getElementById('scoreVal').innerText = `ATS Score: ${score}%`;
+    document.getElementById('scoreVal').style.color = score > 70 ? '#16a34a' : (score > 40 ? '#ca8a04' : '#dc2626');
+    document.getElementById('healthCheck').innerHTML = health;
+
+    // Suggestions based on JD (Simple frequency check)
+    if(jdText.length > 50) {
+        const counts = {};
+        jdWords.forEach(w => { counts[w] = (counts[w]||0)+1; });
+        const sorted = Object.keys(counts).sort((a,b) => counts[b] - counts[a]).slice(0, 8);
+        
+        const sugHTML = sorted.filter(w => !skillsText.toLowerCase().includes(w) && w.length > 4)
+            .map(w => `<span class="chip" onclick="addSkill('${w}')">+ ${w}</span>`).join('');
+            
+        document.getElementById('jdSuggestions').innerHTML = sugHTML ? '<b>Missing Keywords:</b> ' + sugHTML : '';
+    }
+}
+
+function addSkill(w) {
+    const field = document.getElementById('inSkills');
+    field.value = field.value ? field.value + ', ' + w : w;
+    updateCV();
+}
+
+// Init
+addExp();
 </script>
 
 </body>
