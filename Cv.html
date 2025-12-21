@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Kemet ATS Resume Builder – Community Edition</title>
+<title>Kemet ATS Builder – Advanced Safe</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
 <style>
 :root{
- --primary:#111827;
+ --primary:#0f172a;
  --accent:#2563eb;
  --bg:#f3f4f6;
 }
@@ -23,7 +23,7 @@ body{
  overflow:hidden;
 }
 .editor{
- width:38%;
+ width:40%;
  background:#fff;
  padding:20px;
  overflow:auto;
@@ -44,9 +44,12 @@ body{
  padding:20mm;
  box-shadow:0 0 20px rgba(0,0,0,.3);
 }
-h2{margin:0 0 5px}
+
+/* ===== UI ===== */
+h2{margin:0}
+.small{font-size:12px;color:#555}
 label{font-size:12px;font-weight:600}
-input,textarea,select{
+input,textarea{
  width:100%;
  padding:9px;
  margin-bottom:10px;
@@ -55,30 +58,31 @@ input,textarea,select{
 }
 textarea{resize:vertical}
 .section{
- margin-top:20px;
+ margin-top:18px;
  font-weight:700;
  color:var(--accent);
  border-bottom:1px dashed #ccc;
  padding-bottom:5px;
 }
-.btn{
- padding:10px;
- border:none;
- border-radius:6px;
- cursor:pointer;
- font-weight:600;
-}
-.btn-main{background:var(--primary);color:#fff;width:100%;margin-top:10px}
-.btn-soft{background:#eef2ff;color:var(--accent)}
-.warning{font-size:12px;color:#b91c1c;margin-bottom:5px}
 .score{
  background:#ecfeff;
  border:1px solid #67e8f9;
  padding:10px;
  border-radius:6px;
- margin-bottom:10px;
+ margin:10px 0;
  font-weight:700;
 }
+.warn{font-size:12px;color:#b91c1c}
+.ok{font-size:12px;color:#15803d}
+.suggest{
+ background:#f8fafc;
+ border:1px dashed #cbd5f5;
+ padding:8px;
+ font-size:12px;
+ margin-bottom:8px;
+}
+
+/* ===== CV ===== */
 .header{
  border-bottom:2px solid #111;
  padding-bottom:10px;
@@ -94,19 +98,23 @@ textarea{resize:vertical}
  border-bottom:1px solid #ddd;
  margin-bottom:8px;
 }
-.job{margin-bottom:12px;page-break-inside:avoid}
-.row{display:flex;justify-content:space-between;font-weight:700;font-size:13px}
-.sub{font-size:12px;font-style:italic;color:#555}
-.desc{font-size:12px;padding-left:15px}
 .skills{display:flex;flex-wrap:wrap;gap:6px}
-.skill{background:#f3f4f6;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.skill{
+ background:#f3f4f6;
+ padding:3px 8px;
+ border-radius:4px;
+ font-size:11px;
+ font-weight:600;
+}
 .match{background:#dbeafe}
 
+/* ===== Print ===== */
 @media print{
  body{display:block;background:#fff}
  .editor{display:none}
  .preview{padding:0;background:#fff}
  #page{box-shadow:none;width:100%;padding:0}
+ .match{background:#f3f4f6}
  @page{size:A4;margin:20mm}
 }
 </style>
@@ -115,37 +123,33 @@ textarea{resize:vertical}
 <body>
 
 <div class="editor">
-<h2>Kemet ATS Builder</h2>
-<p style="font-size:13px;color:#555">Community version – ATS Optimized</p>
+<h2>Kemet ATS Builder – Advanced</h2>
+<div class="small">All features are ATS-safe</div>
 
 <div id="scoreBox" class="score">ATS Score: 0%</div>
-<div id="warnings"></div>
+<div id="health"></div>
 
 <label>Full Name</label>
 <input id="name">
 
-<label>Job Title</label>
+<label>Target Job Title</label>
 <input id="title">
-
-<label>Summary Template</label>
-<select id="summaryTpl">
- <option value="">-- Select --</option>
- <option value="se">Software Engineer</option>
- <option value="da">Data Analyst</option>
- <option value="mk">Marketing</option>
-</select>
 
 <label>Professional Summary</label>
 <textarea id="summary"></textarea>
 
-<div class="section">Job Description (Paste Here)</div>
-<textarea id="jd"></textarea>
+<div class="section">Job Description</div>
+<textarea id="jd" placeholder="Paste job description here..."></textarea>
 
-<div class="section">Skills (comma separated)</div>
-<textarea id="skills"></textarea>
+<div class="section">Skills</div>
+<textarea id="skills" placeholder="Comma separated"></textarea>
 
-<button class="btn btn-soft" onclick="duplicateCV()">Duplicate for another Job</button>
-<button class="btn btn-main" onclick="window.print()">Save as PDF</button>
+<div class="section">Smart Suggestions</div>
+<div id="suggestions"></div>
+
+<button onclick="window.print()" style="margin-top:10px;width:100%;padding:10px;font-weight:700">
+Save ATS-Safe PDF
+</button>
 </div>
 
 <div class="preview">
@@ -168,87 +172,68 @@ textarea{resize:vertical}
 </div>
 
 <script>
-const nameI=name, titleI=title, summaryI=summary, jdI=jd, skillsI=skills;
-const oName=document.getElementById('oName'),
-      oTitle=document.getElementById('oTitle'),
-      oSummary=document.getElementById('oSummary'),
-      oSkills=document.getElementById('oSkills');
+const els=document.querySelectorAll('input,textarea');
+els.forEach(e=>e.oninput=update);
 
-summaryTpl.onchange=()=>{
- if(summaryTpl.value==='se')
-  summaryI.value="Results-driven Software Engineer with experience in building scalable applications...";
- if(summaryTpl.value==='da')
-  summaryI.value="Data Analyst skilled in transforming data into actionable insights...";
- if(summaryTpl.value==='mk')
-  summaryI.value="Marketing professional with proven experience in growth strategies...";
- update();
-};
-
-document.querySelectorAll('input,textarea').forEach(el=>{
- el.oninput=update;
-});
+function words(t){
+ return t.toLowerCase().match(/\b[a-z]{3,}\b/g)||[];
+}
 
 function update(){
- oName.innerText=nameI.value||'YOUR NAME';
- oTitle.innerText=titleI.value||'JOB TITLE';
- oSummary.innerText=summaryI.value;
+ oName.innerText=name.value||'YOUR NAME';
+ oTitle.innerText=title.value||'JOB TITLE';
+ oSummary.innerText=summary.value;
 
- const keywords=(jdI.value.toLowerCase().match(/\b[a-z]{3,}\b/g)||[]);
+ const jdWords=words(jd.value);
+ const skillArr=skills.value.split(',').map(s=>s.trim()).filter(Boolean);
+
  oSkills.innerHTML='';
  let matched=0;
-
- skillsI.value.split(',').forEach(s=>{
-  if(!s.trim())return;
-  const span=document.createElement('span');
-  span.className='skill';
-  if(keywords.includes(s.trim().toLowerCase())){
-    span.classList.add('match'); matched++;
+ skillArr.forEach(s=>{
+  const sp=document.createElement('span');
+  sp.className='skill';
+  if(jdWords.includes(s.toLowerCase())){
+    sp.classList.add('match'); matched++;
   }
-  span.innerText=s.trim();
-  oSkills.appendChild(span);
+  sp.innerText=s;
+  oSkills.appendChild(sp);
  });
 
  let score=0;
- if(summaryI.value.length>40) score+=25;
- if(skillsI.value.split(',').length>=5) score+=25;
- score+=Math.min(50, matched*10);
+ if(summary.value.length>50) score+=25;
+ if(skillArr.length>=5) score+=25;
+ if(matched>=3) score+=25;
+ if(jdWords.includes(title.value.toLowerCase())) score+=25;
 
  scoreBox.innerText=`ATS Score: ${score}%`;
- showWarnings();
- saveLocal();
+
+ health.innerHTML='';
+ health.innerHTML+=summary.value.length>50
+  ?'<div class="ok">✔ Summary length OK</div>'
+  :'<div class="warn">✖ Summary too short</div>';
+
+ health.innerHTML+=skillArr.length>=5
+  ?'<div class="ok">✔ Skills count OK</div>'
+  :'<div class="warn">✖ Add more skills</div>';
+
+ health.innerHTML+=matched>=3
+  ?'<div class="ok">✔ Keywords matched</div>'
+  :'<div class="warn">✖ Low keyword match</div>';
+
+ suggestSkills(jdWords,skillArr);
 }
 
-function showWarnings(){
- warnings.innerHTML='';
- if(summaryI.value.length<40)
-  warnings.innerHTML+='<div class="warning">Summary is too short</div>';
- if(skillsI.value.split(',').length<5)
-  warnings.innerHTML+='<div class="warning">Add at least 5 skills</div>';
+function suggestSkills(jdWords,skillArr){
+ suggestions.innerHTML='';
+ const uniq=[...new Set(jdWords)];
+ uniq.slice(0,15).forEach(w=>{
+  if(!skillArr.map(s=>s.toLowerCase()).includes(w)){
+   suggestions.innerHTML+=`<div class="suggest">Suggested: ${w}</div>`;
+  }
+ });
 }
 
-function duplicateCV(){
- jdI.value='';
- update();
- alert('CV duplicated. Paste new Job Description.');
-}
-
-function saveLocal(){
- const data={
-  name:nameI.value,title:titleI.value,summary:summaryI.value,
-  jd:jdI.value,skills:skillsI.value
- };
- localStorage.setItem('kemetCV',JSON.stringify(data));
-}
-
-(function load(){
- const d=JSON.parse(localStorage.getItem('kemetCV')||'{}');
- Object.assign(nameI,d.name||'');
- titleI.value=d.title||'';
- summaryI.value=d.summary||'';
- jdI.value=d.jd||'';
- skillsI.value=d.skills||'';
- update();
-})();
+update();
 </script>
 
 </body>
