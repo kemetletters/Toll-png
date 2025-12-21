@@ -1,228 +1,146 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kemet Scan Pro V11</title>
-    
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<meta charset="UTF-8">
+<title>Kemet Scan PRO – Deep SEO Audit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <style>
-        :root { --primary: #2c3e50; --good: #0cce6b; --avg: #ffa400; --poor: #ff4e42; --bg: #f3f4f6; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 800px; margin: 0 auto; }
-        
-        /* البحث */
-        .search-box { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; margin-bottom: 20px; }
-        .input-group { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
-        input { padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; direction: ltr; }
-        .btn-scan { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; }
-        .btn-scan:hover { opacity: 0.9; }
-
-        /* النتائج */
-        #reportContainer { display: none; }
-        .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-        @media (max-width: 600px) { .metrics-grid { grid-template-columns: repeat(2, 1fr); } }
-        
-        .metric-card { background: white; padding: 15px; border-radius: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .chart-container { position: relative; height: 80px; width: 80px; margin: 0 auto; }
-        .score-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: bold; font-size: 18px; }
-
-        .section { background: white; padding: 20px; border-radius: 10px; margin-bottom: 15px; border-left: 5px solid var(--primary); }
-        .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
-        .badge { padding: 3px 8px; border-radius: 4px; color: white; font-weight: bold; font-size: 11px; }
-        .bg-good { background: var(--good); } .bg-avg { background: var(--avg); color: #333; } .bg-poor { background: var(--poor); }
-
-        /* لودر */
-        .loader { display: none; text-align: center; padding: 30px; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #ddd; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s infinite linear; margin: 0 auto 10px; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        .btn-pdf { width: 100%; background: #e74c3c; color: white; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 16px; display: none; }
-    </style>
+<style>
+:root{
+  --good:#0cce6b;--avg:#ffa400;--poor:#ff4e42;--primary:#2c3e50;--bg:#f3f4f6;
+}
+body{font-family:tahoma;background:var(--bg);margin:0;padding:20px;color:#333}
+.container{max-width:900px;margin:auto}
+.box{background:#fff;border-radius:12px;padding:20px;margin-bottom:15px}
+input,select,button{width:100%;padding:12px;font-size:15px;border-radius:8px;border:1px solid #ccc;margin-bottom:8px}
+button{background:var(--primary);color:#fff;font-weight:bold;cursor:pointer}
+.row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee;font-size:14px}
+.badge{padding:3px 8px;border-radius:4px;color:#fff;font-size:11px;font-weight:bold}
+.g{background:var(--good)} .y{background:var(--avg);color:#333} .r{background:var(--poor)}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:600px){.metrics{grid-template-columns:repeat(2,1fr)}}
+.metric{text-align:center;background:#fff;border-radius:10px;padding:10px}
+canvas{max-width:80px;margin:auto}
+h3,h4{margin:5px 0}
+.loader{text-align:center;padding:30px;display:none}
+</style>
 </head>
+
 <body>
-
 <div class="container">
-    <div class="search-box">
-        <h2 style="margin:0; color:var(--primary);">Kemet Scan Pro V11 ⚡</h2>
-        <p style="color:#666; font-size:14px;">فحص شامل باستخدام مفتاحك الخاص (بدون توقف)</p>
-        
-        <div class="input-group">
-            <input type="text" id="apiKeyInput" placeholder="AIzaSyChaSEYoa1O1mlmqo4ttT_Pj9LDxy3cgWM" style="border-color:#e74c3c;">
-            <input type="text" id="urlInput" placeholder="رابط الموقع (مثال: kemetletters.com)">
-            <button class="btn-scan" onclick="runAudit()">🚀 فحص الآن</button>
-        </div>
-        <small style="color:#888; display:block; margin-top:5px;">سيتم حفظ المفتاح تلقائياً للمرات القادمة</small>
-    </div>
 
-    <div id="loader" class="loader">
-        <div class="spinner"></div>
-        <p>جاري الاتصال بجوجل...<br><small>(انتظر قليلاً)</small></p>
-    </div>
+<div class="box">
+<h3>⚡ Kemet Scan PRO – Deep SEO</h3>
+<input id="apiKey" placeholder="Google API Key">
+<input id="url" placeholder="example.com">
+<select id="strategy">
+  <option value="mobile">📱 Mobile</option>
+  <option value="desktop">🖥️ Desktop</option>
+</select>
+<button onclick="scan()">🚀 Start Scan</button>
+</div>
 
-    <div id="reportContainer">
-        <div id="reportContent" style="padding:10px; background:white;">
-            <div style="text-align:center; margin-bottom:20px;">
-                <h3 id="rUrl" style="margin:0; direction:ltr;"></h3>
-                <small id="rDate" style="color:#777;"></small>
-            </div>
+<div id="loader" class="loader">⏳ Scanning...</div>
+<div id="output"></div>
 
-            <div class="metrics-grid">
-                <div class="metric-card"><div class="chart-container"><canvas id="cPerf"></canvas><span class="score-text" id="sPerf">0</span></div><small>الأداء</small></div>
-                <div class="metric-card"><div class="chart-container"><canvas id="cSeo"></canvas><span class="score-text" id="sSeo">0</span></div><small>SEO</small></div>
-                <div class="metric-card"><div class="chart-container"><canvas id="cAcc"></canvas><span class="score-text" id="sAcc">0</span></div><small>الوصول</small></div>
-                <div class="metric-card"><div class="chart-container"><canvas id="cBest"></canvas><span class="score-text" id="sBest">0</span></div><small>الممارسات</small></div>
-            </div>
-
-            <div class="section">
-                <h4 style="margin-top:0;">🚀 مؤشرات السرعة</h4>
-                <div id="perfRows"></div>
-            </div>
-
-            <div class="section">
-                <h4 style="margin-top:0;">🔎 SEO</h4>
-                <div id="seoRows"></div>
-            </div>
-
-             <div class="section">
-                <h4 style="margin-top:0;">🖼️ الصور</h4>
-                <div id="imgRows"></div>
-            </div>
-            
-            <p style="text-align:center; font-size:10px; color:#aaa;">Report generated by Kemet Scan Pro</p>
-        </div>
-    </div>
-
-    <button class="btn-pdf" onclick="downloadPDF()">📥 تحميل التقرير (PDF)</button>
 </div>
 
 <script>
-    // استرجاع المفتاح المحفوظ لو موجود
-    window.onload = function() {
-        const savedKey = localStorage.getItem('kemetApiKey');
-        if(savedKey) document.getElementById('apiKeyInput').value = savedKey;
-    }
+async function scan(){
+  let key=apiKey.value.trim(), u=url.value.trim();
+  if(!key||!u) return alert("API Key + URL");
+  if(!u.startsWith("http")) u="https://"+u;
+  loader.style.display="block";
+  output.innerHTML="";
+  const api=`https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${u}&key=${key}&strategy=${strategy.value}&category=PERFORMANCE&category=SEO&category=ACCESSIBILITY&category=BEST_PRACTICES`;
+  try{
+    let r=await fetch(api); let j=await r.json();
+    if(j.error) throw j.error.message;
+    render(j.lighthouseResult);
+  }catch(e){alert(e)}
+  loader.style.display="none";
+}
 
-    async function runAudit() {
-        let url = document.getElementById('urlInput').value.trim();
-        let apiKey = document.getElementById('apiKeyInput').value.trim();
-        
-        if(!apiKey) { alert("⚠️ لازم تحط مفتاح API Key عشان الفحص يشتغل وميقفش!"); return; }
-        if(!url) { alert("اكتب رابط الموقع"); return; }
-        
-        // حفظ المفتاح للمرات الجاية
-        localStorage.setItem('kemetApiKey', apiKey);
+function grade(v){
+  if(v>=90) return ["A","g"];
+  if(v>=75) return ["B","g"];
+  if(v>=60) return ["C","y"];
+  if(v>=40) return ["D","y"];
+  return ["F","r"];
+}
 
-        if(!url.startsWith('http')) url = 'https://' + url;
+function draw(id,val){
+  new Chart(document.getElementById(id),{
+    type:"doughnut",
+    data:{datasets:[{data:[val,100-val],backgroundColor:[val>=90?"#0cce6b":val>=50?"#ffa400":"#ff4e42","#eee"],borderWidth:0}]},
+    options:{cutout:"75%",plugins:{legend:false,tooltip:false}}
+  });
+}
 
-        document.getElementById('reportContainer').style.display = 'none';
-        document.querySelector('.btn-pdf').style.display = 'none';
-        document.getElementById('loader').style.display = 'block';
+function row(label,a){
+  if(!a) return "";
+  let s=a.score||0;
+  let c=s>=.9?"g":s>=.5?"y":"r";
+  let t=s>=.9?"PASS":s>=.5?"WARN":"FAIL";
+  return `<div class="row"><span>${label}</span><div><b>${a.displayValue||""}</b> <span class="badge ${c}">${t}</span></div></div>`;
+}
 
-        // استخدام المفتاح الخاص بك لتجنب الحظر
-        const api = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${url}&key=${apiKey}&strategy=mobile&category=PERFORMANCE&category=SEO&category=ACCESSIBILITY&category=BEST_PRACTICES`;
+function render(lh){
+  const a=lh.audits;
+  const p=Math.round(lh.categories.performance.score*100);
+  const s=Math.round(lh.categories.seo.score*100);
+  const ac=Math.round(lh.categories.accessibility.score*100);
+  const b=Math.round(lh.categories['best-practices'].score*100);
+  const final=Math.round(p*0.4+s*0.3+ac*0.15+b*0.15);
+  const g=grade(final);
 
-        try {
-            const response = await fetch(api);
-            const data = await response.json();
+  output.innerHTML=`
+  <div class="box">
+    <h3>Final Score: ${final}/100 <span class="badge ${g[1]}">${g[0]}</span></h3>
+    <div class="metrics">
+      <div class="metric"><canvas id="c1"></canvas><small>Performance ${p}</small></div>
+      <div class="metric"><canvas id="c2"></canvas><small>SEO ${s}</small></div>
+      <div class="metric"><canvas id="c3"></canvas><small>Accessibility ${ac}</small></div>
+      <div class="metric"><canvas id="c4"></canvas><small>Best ${b}</small></div>
+    </div>
+  </div>
 
-            if(data.error) {
-                // عرض رسالة الخطأ بوضوح لو حصلت مشكلة
-                throw new Error(data.error.message);
-            }
+  <div class="box">
+    <h4>🔎 Deep SEO Audit</h4>
+    ${row("Title Tag",a['document-title'])}
+    ${row("Meta Description",a['meta-description'])}
+    ${row("Canonical",a['canonical-link'])}
+    ${row("Indexable",a['is-crawlable'])}
+    ${row("HTTPS",a['is-on-https'])}
+    ${row("Robots.txt",a['robots-txt'])}
+    ${row("Hreflang",a['hreflang'])}
+    ${row("Structured Data",a['structured-data'])}
+    ${row("Image ALT",a['image-alt'])}
+    ${row("Viewport",a['viewport'])}
+  </div>
 
-            renderData(data.lighthouseResult);
-            
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('reportContainer').style.display = 'block';
-            document.querySelector('.btn-pdf').style.display = 'block';
+  <div class="box">
+    <h4>💡 Smart Recommendations</h4>
+    <ul>
+      ${tips(a)}
+    </ul>
+  </div>
+  `;
 
-        } catch (error) {
-            document.getElementById('loader').style.display = 'none';
-            alert("❌ خطأ من جوجل:\n" + error.message + "\n\nتأكد إن المفتاح (API Key) منسوخ صح وإنك فعلت خدمة 'PageSpeed Insights API' في حساب جوجل.");
-        }
-    }
+  draw("c1",p); draw("c2",s); draw("c3",ac); draw("c4",b);
+}
 
-    function renderData(lh) {
-        document.getElementById('rUrl').innerText = lh.finalUrl;
-        document.getElementById('rDate').innerText = new Date().toLocaleString();
-
-        drawChart('cPerf', 'sPerf', lh.categories.performance.score * 100);
-        drawChart('cSeo', 'sSeo', lh.categories.seo.score * 100);
-        drawChart('cAcc', 'sAcc', lh.categories.accessibility.score * 100);
-        drawChart('cBest', 'sBest', lh.categories['best-practices'].score * 100);
-
-        const audits = lh.audits;
-
-        document.getElementById('perfRows').innerHTML = `
-            ${makeRow('FCP (First Paint)', audits['first-contentful-paint'])}
-            ${makeRow('LCP (Largest Paint)', audits['largest-contentful-paint'])}
-            ${makeRow('TBT (Blocking Time)', audits['total-blocking-time'])}
-            ${makeRow('CLS (Layout Shift)', audits['cumulative-layout-shift'])}
-            ${makeRow('Speed Index', audits['speed-index'])}
-        `;
-
-        document.getElementById('seoRows').innerHTML = `
-            ${makeRow('Mobile Friendly', audits['viewport'])}
-            ${makeRow('Document Title', audits['document-title'])}
-            ${makeRow('Meta Description', audits['meta-description'])}
-            ${makeRow('Image Alt Text', audits['image-alt'])}
-        `;
-
-        const sizeMB = (audits['total-byte-weight'].numericValue / 1024 / 1024).toFixed(2) + ' MB';
-        document.getElementById('imgRows').innerHTML = `
-            ${makeRowHtml('Total Page Size', sizeMB, audits['total-byte-weight'].score)}
-            ${makeRow('Modern Image Formats', audits['modern-image-formats'])}
-            ${makeRow('Responsive Images', audits['uses-responsive-images'])}
-            ${makeRow('Offscreen Images', audits['offscreen-images'])}
-        `;
-    }
-
-    function drawChart(canvasId, textId, score) {
-        score = Math.round(score);
-        document.getElementById(textId).innerText = score;
-        const ctx = document.getElementById(canvasId).getContext('2d');
-        if(window[canvasId] instanceof Chart) window[canvasId].destroy();
-        let color = score >= 90 ? '#0cce6b' : (score >= 50 ? '#ffa400' : '#ff4e42');
-        window[canvasId] = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Score', 'Rest'],
-                datasets: [{ data: [score, 100-score], backgroundColor: [color, '#eee'], borderWidth: 0 }]
-            },
-            options: { cutout: '75%', plugins: { legend: false, tooltip: false }, maintainAspectRatio: false }
-        });
-    }
-
-    function makeRow(label, audit) {
-        if(!audit) return '';
-        let val = audit.displayValue || (audit.score === 1 ? 'Passed' : 'Failed');
-        return makeRowHtml(label, val, audit.score);
-    }
-
-    function makeRowHtml(label, val, score) {
-        let cls = 'bg-poor'; let txt = 'FAIL';
-        if(score >= 0.9) { cls = 'bg-good'; txt = 'PASS'; }
-        else if(score >= 0.5) { cls = 'bg-avg'; txt = 'AVG'; }
-        return `<div class="row"><span>${label}</span><div style="display:flex; align-items:center; gap:8px;"><b>${val}</b><span class="badge ${cls}">${txt}</span></div></div>`;
-    }
-
-    function downloadPDF() {
-        const btn = document.querySelector('.btn-pdf');
-        btn.innerText = "جاري إنشاء الملف... ⏳";
-        const el = document.getElementById('reportContent');
-        html2canvas(el, { scale: 2, useCORS: true }).then(canvas => {
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const imgW = 210; const imgH = (canvas.height * imgW) / canvas.width;
-            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgW, imgH);
-            pdf.save(`Kemet-Report.pdf`);
-            btn.innerText = "📥 تحميل التقرير (PDF)";
-        });
-    }
+function tips(a){
+  let t=[];
+  if(a['document-title'].score<1) t.push("تحسين Title (50–60 حرف)");
+  if(a['meta-description'].score<1) t.push("كتابة Meta Description جذابة");
+  if(a['image-alt'].score<1) t.push("إضافة ALT للصور");
+  if(a['structured-data'].score<1) t.push("استخدام Schema Markup");
+  if(a['is-on-https'].score<1) t.push("تفعيل HTTPS");
+  if(a['robots-txt'].score<1) t.push("مراجعة robots.txt");
+  return t.map(x=>`<li>${x}</li>`).join("");
+}
 </script>
 
 </body>
